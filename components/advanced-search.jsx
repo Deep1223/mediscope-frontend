@@ -1,10 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Search, Filter, X, Calendar, Tag, FileText, BookOpen, Code, Award } from "lucide-react"
 import TagPicker from "./ui/tag-picker"
-import { getFilterOptions } from "../lib/api-utils"
 
 export default function AdvancedSearch() {
     const router = useRouter()
@@ -18,42 +17,52 @@ export default function AdvancedSearch() {
         journalCode: ""
     })
 
-    const [filterOptions, setFilterOptions] = useState({
-        journals: [],
-        articleTypes: [],
-        journalCodes: [],
-        badgeTypes: []
-    })
+    // Static filter options with ID and display values
+    const filterOptions = {
+        journals: [
+            { id: "ayurveda", name: "AyushVeda Ayurveda" },
+            { id: "yoga", name: "AyushVeda Yoga" },
+            { id: "naturopathy", name: "AyushVeda Naturopathy" },
+            { id: "homeopathy", name: "AyushVeda Homeopathy" },
+            { id: "unani", name: "AyushVeda Unani" },
+            { id: "siddha", name: "AyushVeda Siddha" },
+            { id: "global-health", name: "AyushVeda Global Health" }
+        ],
+        articleTypes: [
+            { id: "original-research", name: "Original Research" },
+            { id: "review-article", name: "Review Article" },
+            { id: "commentary", name: "Commentary" },
+            { id: "case-report", name: "Case Report" },
+            { id: "letter-editor", name: "Letter to the Editor" },
+            { id: "editorial", name: "Editorial" },
+            { id: "clinical-trial", name: "Clinical Trial" },
+            { id: "meta-analysis", name: "Meta-Analysis" }
+        ],
+        journalCodes: [
+            { id: "technology", name: "Technology" },
+            { id: "cardiology", name: "Cardiology" },
+            { id: "medicine", name: "Medicine" },
+            { id: "pediatrics", name: "Pediatrics" },
+            { id: "oncology", name: "Oncology" },
+            { id: "psychiatry", name: "Psychiatry" },
+            { id: "ayurveda", name: "Ayurveda" },
+            { id: "yoga", name: "Yoga" },
+            { id: "naturopathy", name: "Naturopathy" },
+            { id: "homeopathy", name: "Homeopathy" },
+            { id: "unani", name: "Unani" },
+            { id: "siddha", name: "Siddha" },
+            { id: "global-health", name: "Global Health" }
+        ],
+        badgeTypes: [
+            { id: "research", name: "Research" },
+            { id: "open-access", name: "Open Access" },
+            { id: "comment", name: "Comment" },
+            { id: "news", name: "News" },
+            { id: "review", name: "Review" }
+        ]
+    }
 
     const [isLoading, setIsLoading] = useState(false)
-
-    // Load filter options on component mount
-    useEffect(() => {
-        loadFilterOptions()
-    }, [])
-
-  const loadFilterOptions = async () => {
-    try {
-      const response = await getFilterOptions()
-      if (response.success) {
-        setFilterOptions({
-          journals: response.data.journals || [],
-          articleTypes: response.data.articleTypes || [],
-          journalCodes: response.data.journalCodes || [],
-          badgeTypes: response.data.badgeTypes || []
-        })
-      }
-    } catch (error) {
-      console.error('Error loading filter options:', error)
-      // Ensure filter options are initialized even if API fails
-      setFilterOptions({
-        journals: [],
-        articleTypes: [],
-        journalCodes: [],
-        badgeTypes: []
-      })
-    }
-  }
 
     const handleInputChange = (field, value) => {
         setFilters(prev => ({
@@ -171,15 +180,11 @@ export default function AdvancedSearch() {
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                             >
                                 <option value="">All Journals</option>
-                                {
-                                    filterOptions.journals?.length > 0 && (
-                                        filterOptions.journals.map((journal) => (
-                                            <option key={journal} value={journal}>
-                                                {journal}
-                                            </option>
-                                        ))
-                                    )
-                                }
+                                {filterOptions.journals.map((journal) => (
+                                    <option key={journal.id} value={journal.id}>
+                                        {journal.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 
@@ -195,11 +200,11 @@ export default function AdvancedSearch() {
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                             >
                                 <option value="">All Types</option>
-                {filterOptions.articleTypes?.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                )) || []}
+                                {filterOptions.articleTypes.map((type) => (
+                                    <option key={type.id} value={type.id}>
+                                        {type.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 
@@ -215,11 +220,11 @@ export default function AdvancedSearch() {
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                             >
                                 <option value="">All Badge Types</option>
-                                {filterOptions.badgeTypes?.map((type) => (
-                                    <option key={type} value={type}>
-                                        {type}
+                                {filterOptions.badgeTypes.map((type) => (
+                                    <option key={type.id} value={type.id}>
+                                        {type.name}
                                     </option>
-                                )) || []}
+                                ))}
                             </select>
                         </div>
 
@@ -235,11 +240,11 @@ export default function AdvancedSearch() {
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                             >
                                 <option value="">All Codes</option>
-                                {filterOptions.journalCodes?.map((code) => (
-                                    <option key={code} value={code}>
-                                        {code}
+                                {filterOptions.journalCodes.map((code) => (
+                                    <option key={code.id} value={code.id}>
+                                        {code.name}
                                     </option>
-                                )) || []}
+                                ))}
                             </select>
                         </div>
                     </div>
