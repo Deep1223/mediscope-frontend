@@ -4,58 +4,52 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
-const carouselItems = [
-  {
-    id: 1,
-    title: "Revolutionary AI-Driven Diagnostic Tools in Modern Medicine",
-    subtitle: "How artificial intelligence is transforming patient care and clinical decision-making",
-    journal: "AyushVeda Ayurveda",
-    date: "15 Jan 2025",
-    image: "/ai-healthcare.png",
-    category: "Research",
-  },
-  {
-    id: 2,
-    title: "Global Health Equity: Addressing Healthcare Disparities",
-    subtitle: "Comprehensive strategies for improving healthcare access worldwide",
-    journal: "AyushVeda Global Health",
-    date: "14 Jan 2025",
-    image: "/african-healthcare.jpg",
-    category: "Article",
-  },
-  {
-    id: 3,
-    title: "Climate Change and Public Health: A Critical Connection",
-    subtitle: "Understanding the intersection of environmental factors and human health",
-    journal: "AyushVeda Naturopathy",
-    date: "13 Jan 2025",
-    image: "/climate-change-environmental-health.jpg",
-    category: "Comment",
-  },
-  {
-    id: 4,
-    title: "Breakthrough in Precision Medicine and Personalized Treatment",
-    subtitle: "Tailoring medical interventions to individual patient characteristics",
-    journal: "AyushVeda Homeopathy",
-    date: "12 Jan 2025",
-    image: "/cancer-immunotherapy.jpg",
-    category: "News",
-  },
-]
-
 export default function HeroCarousel() {
+  const [carouselItems, setCarouselItems] = useState([])
   const [currentSlide, setCurrentSlide] = useState(0)
   const [autoPlay, setAutoPlay] = useState(true)
 
+  // ✅ Fetch data from backend API
   useEffect(() => {
-    if (!autoPlay) return
+    const fetchArticles = async () => {
+      try {
+        const response = await fetch("https://brockersbackend.finnovationz.com/api/article/public/articles")
+        const data = await response.json()
+        if (data.success && data.data?.articles) {
+          // ✅ Transform the data to match carousel display needs
+          const items = data.data.articles.map((article) => ({
+            id: article._id,
+            title: article.title?.trim(),
+            subtitle: article.excerpt?.replace(/<\/?[^>]+(>|$)/g, "").slice(0, 150) + "...", // strip HTML
+            journal: article.journal?.trim(),
+            date: new Date(article.date).toLocaleDateString("en-IN", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }),
+            image: article.image,
+            category: article.badgeType?.trim() || "Research",
+          }))
+          setCarouselItems(items)
+        }
+      } catch (error) {
+        console.error("Error fetching articles:", error)
+      }
+    }
+
+    fetchArticles()
+  }, [])
+
+  // ✅ Auto-play logic
+  useEffect(() => {
+    if (!autoPlay || carouselItems.length === 0) return
 
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % carouselItems.length)
     }, 6000)
 
     return () => clearInterval(timer)
-  }, [autoPlay])
+  }, [autoPlay, carouselItems])
 
   const goToSlide = (index) => {
     setCurrentSlide(index)
@@ -72,21 +66,32 @@ export default function HeroCarousel() {
     setAutoPlay(false)
   }
 
+  if (carouselItems.length === 0) {
+    return (
+      <section className="py-24 text-center text-gray-600">
+        <p>Loading latest research articles...</p>
+      </section>
+    )
+  }
+
   const item = carouselItems[currentSlide]
 
   return (
     <section className="relative bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 overflow-hidden">
       {/* Modern Background Pattern */}
       <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23059669' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23059669' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
       </div>
 
-        <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Modern Content Design */}
-            <div className="space-y-6">
+      <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Modern Content Design */}
+          <div className="space-y-6">
             <div className="inline-flex items-center gap-3">
               <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
               <span className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
@@ -94,18 +99,18 @@ export default function HeroCarousel() {
               </span>
             </div>
 
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight text-gray-900">
-                <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
-                  {item.title}
-                </span>
-              </h1>
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight text-gray-900">
+              <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                {item.title}
+              </span>
+            </h1>
 
-              <p className="text-lg md:text-xl text-gray-600 leading-relaxed font-light max-w-2xl">
-                {item.subtitle}
-              </p>
+            <p className="text-lg md:text-xl text-gray-600 leading-relaxed font-light max-w-2xl">
+              {item.subtitle}
+            </p>
 
-              {/* Modern Metadata Cards */}
-              <div className="flex flex-wrap gap-6">
+            {/* Modern Metadata Cards */}
+            <div className="flex flex-wrap gap-6">
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-emerald-100">
                 <p className="text-sm text-gray-500 mb-1">Journal</p>
                 <p className="font-semibold text-emerald-600">{item.journal}</p>
@@ -116,8 +121,8 @@ export default function HeroCarousel() {
               </div>
             </div>
 
-              {/* Modern CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-6">
+            {/* Modern CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-6">
               <Link
                 href={`/article/${item.id}`}
                 className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-base"
@@ -139,10 +144,10 @@ export default function HeroCarousel() {
           {/* Modern Image Design */}
           <div className="relative">
             <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-              <img 
-                src={item.image || "/placeholder.svg"} 
-                alt={item.title} 
-                className="w-full h-[400px] md:h-[450px] object-cover" 
+              <img
+                src={item.image || "/placeholder.svg"}
+                alt={item.title}
+                className="w-full h-[400px] md:h-[450px] object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/20 via-transparent to-transparent" />
             </div>
@@ -152,8 +157,8 @@ export default function HeroCarousel() {
           </div>
         </div>
 
-          {/* Modern Carousel Controls */}
-          <div className="mt-12 flex items-center justify-between">
+        {/* Modern Carousel Controls */}
+        <div className="mt-12 flex items-center justify-between">
           {/* Modern Indicators */}
           <div className="flex gap-3">
             {carouselItems.map((_, index) => (
@@ -161,8 +166,8 @@ export default function HeroCarousel() {
                 key={index}
                 onClick={() => goToSlide(index)}
                 className={`transition-all duration-300 rounded-full ${
-                  index === currentSlide 
-                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 w-12 h-3 shadow-lg" 
+                  index === currentSlide
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 w-12 h-3 shadow-lg"
                     : "bg-gray-300 hover:bg-gray-400 w-3 h-3"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
@@ -189,8 +194,8 @@ export default function HeroCarousel() {
           </div>
         </div>
 
-          {/* Modern Slide Counter */}
-          <div className="mt-8 text-center">
+        {/* Modern Slide Counter */}
+        <div className="mt-8 text-center">
           <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg">
             <span className="text-sm text-gray-600">Article</span>
             <span className="text-emerald-600 font-bold">{currentSlide + 1}</span>

@@ -138,7 +138,7 @@ export default function SubmitResearchPage() {
       const formData = new FormData()
       formData.append('image', file)
       
-      const response = await fetch('/api/article/upload', {
+      const response = await fetch('https://brockersbackend.finnovationz.com/api/article/upload', {
         method: 'POST',
         body: formData
       })
