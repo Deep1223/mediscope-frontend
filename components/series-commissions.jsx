@@ -36,7 +36,7 @@ export default function SeriesCommissions() {
     },
     {
       id: 3,
-      title: "MediScope Commission on Sustainable Healthcare Systems",
+      title: "AyushVeda Commission on Sustainable AYUSH Healthcare Systems",
       excerpt: "Comprehensive recommendations for building resilient and sustainable healthcare infrastructure",
       image: "/sustainable-food.jpg",
       badge: "COMMISSION",
@@ -75,7 +75,7 @@ export default function SeriesCommissions() {
     },
     {
       id: 6,
-      title: "MediScope Commission on Antimicrobial Stewardship",
+      title: "AyushVeda Commission on Traditional Medicine Stewardship",
       excerpt: "Global strategies to combat antimicrobial resistance through technology and policy innovation",
       image: "/antibiotic-research.jpg",
       badge: "COMMISSION",
@@ -94,28 +94,28 @@ export default function SeriesCommissions() {
   })
 
     return (
-      <section className="py-24 md:py-40 bg-gradient-to-br from-emerald-50/50 via-teal-50/30 to-cyan-50/50">
+      <section className="py-12 md:py-16 bg-gradient-to-br from-emerald-50/50 via-teal-50/30 to-cyan-50/50">
         <div className="container mx-auto px-4">
           {/* Modern Section Header */}
-          <div className="text-center mb-20">
+          <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 mb-4">
             <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
             <span className="text-cyan-600 font-semibold text-sm uppercase tracking-wider">Expert Insights</span>
             <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
           </div>
-            <h2 className="text-5xl md:text-7xl font-bold text-gray-900 mb-8">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
               <span className="bg-gradient-to-r from-cyan-600 via-teal-600 to-emerald-600 bg-clip-text text-transparent">
                 Series & Commissions
               </span>
             </h2>
-            <p className="text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
               Explore in-depth series and expert commissions on important health topics
             </p>
           </div>
 
           {/* Tab Navigation */}
           <div className="flex justify-center mb-16">
-          <div className="bg-white rounded-2xl p-2 shadow-lg border border-gray-100">
+          <div className="bg-white rounded-2xl p-2 shadow-lg border border-gray-100 flex flex-row gap-1">
           {[
             { value: "all", label: "All", icon: null },
             { value: "series", label: "Series", icon: BookOpen },

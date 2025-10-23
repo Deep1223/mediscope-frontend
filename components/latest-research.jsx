@@ -1,104 +1,21 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import ArticleCard from "./article-card"
 import { Search, X } from "lucide-react"
+import { getLatestResearchData } from "../lib/research-utils"
 
 export default function LatestResearch() {
   const [selectedJournal, setSelectedJournal] = useState("all")
   const [selectedType, setSelectedType] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
+  const [allArticles, setAllArticles] = useState([])
 
-  const allArticles = [
-    {
-      id: 1,
-      title:
-        "Novel AI-Driven Diagnostic Platform for Early Disease Detection: A Multicenter Validation Study",
-      excerpt: "Artificial intelligence shows remarkable accuracy in early disease identification across multiple specialties",
-      image: "/ai-healthcare.png",
-      badge: "OPEN ACCESS",
-      badgeType: "open-access",
-      journal: "MediScope Technology",
-      authors: "AI Research Consortium",
-      date: "Jan 2025",
-      link: "/article/1",
-      type: "research",
-      journalCode: "technology",
-    },
-    {
-      id: 2,
-      title:
-        "Precision Medicine Approaches in Cardiovascular Disease Management: Personalized Treatment Protocols",
-      excerpt: "Tailored therapeutic strategies improve outcomes in cardiovascular care",
-      image: "/cardiometabolic-health.jpg",
-      badge: "OPEN ACCESS",
-      badgeType: "open-access",
-      journal: "MediScope Cardiology",
-      authors: "Cardiovascular Research Group",
-      date: "Jan 2025",
-      link: "/article/2",
-      type: "research",
-      journalCode: "cardiology",
-    },
-    {
-      id: 3,
-      title:
-        "Antimicrobial Stewardship in the Digital Age: AI-Enhanced Resistance Monitoring and Treatment Optimization",
-      excerpt: "Technology-driven approaches to combat antimicrobial resistance",
-      image: "/antibiotic-research.jpg",
-      badge: "RESEARCH",
-      badgeType: "research",
-      journal: "MediScope Medicine",
-      authors: "Infectious Disease Research Team",
-      date: "Jan 2025",
-      link: "/article/3",
-      type: "research",
-      journalCode: "medicine",
-    },
-    {
-      id: 4,
-      title:
-        "Innovative Nutritional Interventions in Neonatal Care: Evidence-Based Feeding Strategies for Preterm Infants",
-      excerpt: "Advanced nutritional protocols improve developmental outcomes in premature babies",
-      image: "/preterm-nutrition.jpg",
-      badge: "OPEN ACCESS",
-      badgeType: "open-access",
-      journal: "MediScope Pediatrics",
-      authors: "Neonatal Research Division",
-      date: "Jan 2025",
-      link: "/article/4",
-      type: "research",
-      journalCode: "pediatrics",
-    },
-    {
-      id: 5,
-      title: "Next-Generation Cancer Immunotherapy: Long-term Efficacy and Safety Profiles",
-      excerpt: "Advanced immunotherapeutic approaches demonstrate sustained clinical benefits",
-      image: "/cancer-immunotherapy.jpg",
-      badge: "RESEARCH",
-      badgeType: "research",
-      journal: "MediScope Oncology",
-      authors: "Oncology Research Institute",
-      date: "Jan 2025",
-      link: "/article/5",
-      type: "research",
-      journalCode: "oncology",
-    },
-    {
-      id: 6,
-      title: "Digital Mental Health Interventions: Comparative Effectiveness of Technology-Based Therapies",
-      excerpt: "Technology-enhanced psychological treatments show promising results in mental healthcare",
-      image: "/mental-health-digital.jpg",
-      badge: "RESEARCH",
-      badgeType: "research",
-      journal: "MediScope Psychiatry",
-      authors: "Mental Health Technology Lab",
-      date: "Jan 2025",
-      link: "/article/6",
-      type: "research",
-      journalCode: "psychiatry",
-    },
-  ]
+  // Load research data on component mount
+  useEffect(() => {
+    const researchData = getLatestResearchData()
+    setAllArticles(researchData)
+  }, [])
 
   const filteredArticles = allArticles.filter((article) => {
     const matchesJournal = selectedJournal === "all" || article.journalCode === selectedJournal
@@ -117,22 +34,22 @@ export default function LatestResearch() {
   }
 
     return (
-      <section className="py-24 md:py-40 bg-white">
+      <section className="py-12 md:py-16 bg-white">
         <div className="container mx-auto px-4">
           {/* Modern Section Header */}
-          <div className="text-center mb-20">
+          <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 mb-4">
             <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
             <span className="text-teal-600 font-semibold text-sm uppercase tracking-wider">Research Hub</span>
             <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
           </div>
-            <h2 className="text-5xl md:text-7xl font-bold text-gray-900 mb-8">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
               <span className="bg-gradient-to-r from-teal-600 via-emerald-600 to-cyan-600 bg-clip-text text-transparent">
                 Latest Research
               </span>
             </h2>
-            <p className="text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-              Explore the latest peer-reviewed research articles from MediScope Publications
+            <p className="text-lg md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+              Explore the latest peer-reviewed research articles from AyushVeda Publications
             </p>
           </div>
 
@@ -168,12 +85,12 @@ export default function LatestResearch() {
                 <h4 className="filter-group-title">Journal</h4>
                 {[
                   { value: "all", label: "All Journals" },
-                  { value: "medicine", label: "MediScope Medicine" },
-                  { value: "technology", label: "MediScope Technology" },
-                  { value: "cardiology", label: "MediScope Cardiology" },
-                  { value: "oncology", label: "MediScope Oncology" },
-                  { value: "psychiatry", label: "MediScope Psychiatry" },
-                  { value: "pediatrics", label: "MediScope Pediatrics" },
+                  { value: "ayurveda", label: "AyushVeda Ayurveda" },
+                  { value: "yoga", label: "AyushVeda Yoga" },
+                  { value: "naturopathy", label: "AyushVeda Naturopathy" },
+                  { value: "homeopathy", label: "AyushVeda Homeopathy" },
+                  { value: "unani", label: "AyushVeda Unani" },
+                  { value: "siddha", label: "AyushVeda Siddha" },
                 ].map((option) => (
                   <div key={option.value} className="filter-option">
                     <input

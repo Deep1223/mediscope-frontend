@@ -3,47 +3,11 @@
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { FileText, Clock, CheckCircle, AlertCircle, Eye, Download, Edit, Trash2, Plus } from "lucide-react"
+import { getDashboardResearchData } from "../../lib/research-utils"
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null)
-  const [submissions, setSubmissions] = useState([
-    {
-      id: 1,
-      title: "Novel Immunotherapy Approach for Advanced Melanoma",
-      journal: "The Lancet Oncology",
-      status: "under-review",
-      submittedDate: "2024-01-15",
-      lastUpdated: "2024-01-20",
-      reviewerComments: 2,
-    },
-    {
-      id: 2,
-      title: "Cardiovascular Risk Factors in Post-COVID Patients",
-      journal: "The Lancet",
-      status: "accepted",
-      submittedDate: "2023-11-10",
-      lastUpdated: "2024-01-10",
-      reviewerComments: 0,
-    },
-    {
-      id: 3,
-      title: "Mental Health Interventions in Rural Communities",
-      journal: "The Lancet Psychiatry",
-      status: "revision-requested",
-      submittedDate: "2024-01-05",
-      lastUpdated: "2024-01-18",
-      reviewerComments: 3,
-    },
-    {
-      id: 4,
-      title: "Antibiotic Resistance Patterns in Southeast Asia",
-      journal: "The Lancet Infectious Diseases",
-      status: "rejected",
-      submittedDate: "2023-12-20",
-      lastUpdated: "2024-01-08",
-      reviewerComments: 2,
-    },
-  ])
+  const [submissions, setSubmissions] = useState([])
 
   const [activeTab, setActiveTab] = useState("all")
   const [selectedSubmission, setSelectedSubmission] = useState(null)
@@ -56,6 +20,10 @@ export default function DashboardPage() {
     } else {
       window.location.href = "/login"
     }
+
+    // Load research submissions
+    const researchData = getDashboardResearchData()
+    setSubmissions(researchData)
   }, [])
 
   const handleLogout = () => {
@@ -65,13 +33,18 @@ export default function DashboardPage() {
 
   const handleDeleteSubmission = (id) => {
     if (confirm("Are you sure you want to delete this submission?")) {
-      setSubmissions(submissions.filter((s) => s.id !== id))
+      // Remove from localStorage
+      const key = `submit-research-${id}`
+      localStorage.removeItem(key)
+      
+      // Update state
+      setSubmissions(submissions.filter((s) => s._id !== id))
     }
   }
 
   const handleDownloadSubmission = (id) => {
     try {
-      const submission = submissions.find(s => s.id === id)
+      const submission = submissions.find(s => s._id === id)
       if (!submission) {
         alert('Submission not found!')
         return
@@ -84,10 +57,11 @@ export default function DashboardPage() {
         
         Title: ${submission.title}
         Journal: ${submission.journal}
-        Status: ${submission.status}
-        Submitted Date: ${submission.submittedDate}
-        Last Updated: ${submission.lastUpdated}
-        Reviewer Comments: ${submission.reviewerComments}
+        Status: ${submission.status === 1 ? 'Published' : 'Under Review'}
+        Submitted Date: ${new Date(submission.recordinfo?.entryTime || submission.date).toLocaleDateString()}
+        Last Updated: ${new Date(submission.recordinfo?.updateTime || submission.date).toLocaleDateString()}
+        Authors: ${submission.authors?.map(a => a.name).join(", ") || "Unknown"}
+        Keywords: ${submission.keywords?.join(", ") || "None"}
         
         This is a demo download. In a real application, this would contain the full submission files.
       `
@@ -116,6 +90,8 @@ export default function DashboardPage() {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
+      1: { bg: "bg-green-100", text: "text-green-800", label: "Published" },
+      0: { bg: "bg-blue-100", text: "text-blue-800", label: "Under Review" },
       "under-review": { bg: "bg-blue-100", text: "text-blue-800", label: "Under Review" },
       accepted: { bg: "bg-green-100", text: "text-green-800", label: "Accepted" },
       "revision-requested": { bg: "bg-yellow-100", text: "text-yellow-800", label: "Revision Requested" },
@@ -132,8 +108,10 @@ export default function DashboardPage() {
 
   const getStatusIcon = (status) => {
     switch (status) {
+      case 1:
       case "accepted":
         return <CheckCircle className="w-5 h-5 text-green-600" />
+      case 0:
       case "under-review":
         return <Clock className="w-5 h-5 text-blue-600" />
       case "revision-requested":
@@ -145,7 +123,11 @@ export default function DashboardPage() {
     }
   }
 
-  const filteredSubmissions = activeTab === "all" ? submissions : submissions.filter((s) => s.status === activeTab)
+  const filteredSubmissions = activeTab === "all" ? submissions : submissions.filter((s) => {
+    if (activeTab === "under-review") return s.status === 0
+    if (activeTab === "accepted") return s.status === 1
+    return s.status === activeTab
+  })
 
   if (!user) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>
@@ -192,7 +174,7 @@ export default function DashboardPage() {
               <div>
                 <p className="text-gray-600 text-sm font-medium">Under Review</p>
                 <p className="text-3xl font-bold text-lancet-dark mt-2">
-                  {submissions.filter((s) => s.status === "under-review").length}
+                  {submissions.filter((s) => s.status === 0).length}
                 </p>
               </div>
               <Clock className="w-12 h-12 text-blue-500/20" />
@@ -202,9 +184,9 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Accepted</p>
+                <p className="text-gray-600 text-sm font-medium">Published</p>
                 <p className="text-3xl font-bold text-lancet-dark mt-2">
-                  {submissions.filter((s) => s.status === "accepted").length}
+                  {submissions.filter((s) => s.status === 1).length}
                 </p>
               </div>
               <CheckCircle className="w-12 h-12 text-green-500/20" />
@@ -289,12 +271,11 @@ export default function DashboardPage() {
                           </div>
                           <p className="text-sm text-gray-600 mb-3">{submission.journal}</p>
                           <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
-                            <span>Submitted: {new Date(submission.submittedDate).toLocaleDateString()}</span>
-                            <span>Updated: {new Date(submission.lastUpdated).toLocaleDateString()}</span>
-                            {submission.reviewerComments > 0 && (
+                            <span>Submitted: {new Date(submission.recordinfo?.entryTime || submission.date).toLocaleDateString()}</span>
+                            <span>Updated: {new Date(submission.recordinfo?.updateTime || submission.date).toLocaleDateString()}</span>
+                            {submission.authors && (
                               <span className="text-lancet-blue font-medium">
-                                {submission.reviewerComments} reviewer comment
-                                {submission.reviewerComments !== 1 ? "s" : ""}
+                                {submission.authors.length} author{submission.authors.length !== 1 ? "s" : ""}
                               </span>
                             )}
                           </div>
@@ -312,11 +293,11 @@ export default function DashboardPage() {
                             >
                               <Eye size={18} />
                             </button>
-                            {submission.status !== "accepted" && submission.status !== "rejected" && (
+                            {submission.status !== 1 && submission.status !== "rejected" && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  window.location.href = `/submit-research?edit=${submission.id}`
+                                  window.location.href = `/submit-research?edit=${submission._id}`
                                 }}
                                 className="p-2 hover:bg-yellow-100 rounded-lg transition text-yellow-600"
                                 title="Edit submission"
@@ -327,7 +308,7 @@ export default function DashboardPage() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                handleDeleteSubmission(submission.id)
+                                handleDeleteSubmission(submission._id)
                               }}
                               className="p-2 hover:bg-red-100 rounded-lg transition text-red-600"
                               title="Delete submission"
@@ -379,26 +360,25 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-600 font-medium">Submitted</p>
-                  <p className="text-lancet-dark">{new Date(selectedSubmission.submittedDate).toLocaleDateString()}</p>
+                  <p className="text-lancet-dark">{new Date(selectedSubmission.recordinfo?.entryTime || selectedSubmission.date).toLocaleDateString()}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 font-medium">Last Updated</p>
-                  <p className="text-lancet-dark">{new Date(selectedSubmission.lastUpdated).toLocaleDateString()}</p>
+                  <p className="text-lancet-dark">{new Date(selectedSubmission.recordinfo?.updateTime || selectedSubmission.date).toLocaleDateString()}</p>
                 </div>
               </div>
-              {selectedSubmission.reviewerComments > 0 && (
+              {selectedSubmission.authors && (
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <p className="text-sm font-medium text-blue-900 mb-2">
-                    {selectedSubmission.reviewerComments} Reviewer Comment
-                    {selectedSubmission.reviewerComments !== 1 ? "s" : ""}
+                    Authors ({selectedSubmission.authors.length})
                   </p>
-                  <p className="text-sm text-blue-800">Check your email for detailed feedback from reviewers.</p>
+                  <p className="text-sm text-blue-800">{selectedSubmission.authors.map(a => a.name).join(", ")}</p>
                 </div>
               )}
             </div>
             <div className="p-6 border-t border-lancet-border flex gap-3">
               <button 
-                onClick={() => handleDownloadSubmission(selectedSubmission.id)}
+                onClick={() => handleDownloadSubmission(selectedSubmission._id)}
                 className="btn btn-lancet flex-1 flex items-center justify-center gap-2"
               >
                 <Download size={18} />

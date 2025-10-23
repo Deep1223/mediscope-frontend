@@ -10,7 +10,7 @@ export default function Footer() {
                 <span className="text-white font-bold text-lg">M</span>
               </div>
               <div>
-                <h5 className="text-xl font-bold text-white">MediScope</h5>
+                <h5 className="text-xl font-bold text-white">AyushVeda</h5>
                 <p className="text-emerald-300 text-sm">Medical Research Platform</p>
               </div>
             </div>
@@ -26,19 +26,19 @@ export default function Footer() {
               <li>
                 <a href="#" className="text-gray-300 hover:text-emerald-300 transition-colors duration-300 flex items-center gap-2">
                   <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
-                  MediScope Medicine
+                  AyushVeda Ayurveda
                 </a>
               </li>
               <li>
                 <a href="#" className="text-gray-300 hover:text-emerald-300 transition-colors duration-300 flex items-center gap-2">
                   <span className="w-2 h-2 bg-teal-400 rounded-full"></span>
-                  MediScope Technology
+                  AyushVeda Yoga
                 </a>
               </li>
               <li>
                 <a href="#" className="text-gray-300 hover:text-emerald-300 transition-colors duration-300 flex items-center gap-2">
                   <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>
-                  MediScope Global Health
+                  AyushVeda Naturopathy
                 </a>
               </li>
             </ul>
@@ -101,7 +101,7 @@ export default function Footer() {
         <div className="border-t border-gray-700 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-400 text-sm">
-              &copy; 2025 MediScope Publications. All rights reserved.
+              &copy; 2025 AyushVeda Publications. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm">
               <a href="#" className="text-gray-400 hover:text-emerald-300 transition-colors duration-300">Privacy Policy</a>

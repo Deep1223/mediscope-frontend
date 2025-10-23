@@ -13,17 +13,14 @@ export default function SubmissionDetailPage({ params }) {
     status: "under-review",
     submittedDate: "2024-01-15",
     lastUpdated: "2024-01-20",
-    abstract:
-      "This study investigates a novel immunotherapy approach for treating advanced melanoma. Our findings suggest significant improvements in patient outcomes...",
     keywords: ["melanoma", "immunotherapy", "cancer treatment", "clinical trial"],
     authors: [
       {
         name: "Dr. John Smith",
         email: "john@example.com",
         affiliation: "Harvard Medical School",
-        isCorresponding: true,
       },
-      { name: "Dr. Jane Doe", email: "jane@example.com", affiliation: "Stanford University", isCorresponding: false },
+      { name: "Dr. Jane Doe", email: "jane@example.com", affiliation: "Stanford University" },
     ],
     reviewStatus: "under-review",
     reviewerCount: 2,
@@ -69,19 +66,16 @@ export default function SubmissionDetailPage({ params }) {
         FILES INCLUDED:
         ${submission.files.map((file, index) => `
         ${index + 1}. ${file.name}
-           Size: ${file.size}
-           Upload Date: ${file.uploadDate}
+            Size: ${file.size}
+            Upload Date: ${file.uploadDate}
         `).join('')}
-        
-        ABSTRACT:
-        ${submission.abstract}
         
         KEYWORDS:
         ${submission.keywords.join(', ')}
         
         AUTHORS:
         ${submission.authors.map(author => `
-        - ${author.name} (${author.isCorresponding ? 'Corresponding' : 'Co-author'})
+        - ${author.name}
           Email: ${author.email}
           Affiliation: ${author.affiliation}
         `).join('')}
@@ -262,12 +256,6 @@ export default function SubmissionDetailPage({ params }) {
               </div>
             </div>
 
-            {/* Abstract */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold text-lancet-dark mb-4">Abstract</h2>
-              <p className="text-gray-700 leading-relaxed">{submission.abstract}</p>
-            </div>
-
             {/* Authors */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-lancet-dark mb-4 flex items-center gap-2">
@@ -281,11 +269,6 @@ export default function SubmissionDetailPage({ params }) {
                       <div>
                         <p className="font-medium text-lancet-dark">
                           {author.name}
-                          {author.isCorresponding && (
-                            <span className="ml-2 text-xs bg-lancet-blue text-white px-2 py-1 rounded">
-                              Corresponding
-                            </span>
-                          )}
                         </p>
                         <p className="text-sm text-gray-600">{author.affiliation}</p>
                         <p className="text-sm text-gray-600">{author.email}</p>

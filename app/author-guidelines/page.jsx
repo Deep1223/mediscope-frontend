@@ -10,8 +10,6 @@ export default function AuthorGuidelinesPage() {
       icon: <FileText className="w-6 h-6" />,
       items: [
         "Use clear, concise language appropriate for an international audience",
-        "Organize manuscript with: Title, Abstract, Introduction, Methods, Results, Discussion, Conclusion",
-        "Include a structured abstract (250 words max) with Background, Methods, Findings, Interpretation",
         "Use SI units for all measurements",
         "Number all figures and tables sequentially",
         "Include figure legends and table captions",
@@ -139,7 +137,6 @@ export default function AuthorGuidelinesPage() {
               "Ethics approval is documented",
               "Figures and tables are high quality",
               "References are complete and formatted correctly",
-              "Abstract is 250 words or less",
               "Manuscript follows journal style guidelines",
               "All author affiliations are included",
               "Data availability statement is provided",

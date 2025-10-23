@@ -9,7 +9,7 @@ const carouselItems = [
     id: 1,
     title: "Revolutionary AI-Driven Diagnostic Tools in Modern Medicine",
     subtitle: "How artificial intelligence is transforming patient care and clinical decision-making",
-    journal: "MediScope Medicine",
+    journal: "AyushVeda Ayurveda",
     date: "15 Jan 2025",
     image: "/ai-healthcare.png",
     category: "Research",
@@ -18,7 +18,7 @@ const carouselItems = [
     id: 2,
     title: "Global Health Equity: Addressing Healthcare Disparities",
     subtitle: "Comprehensive strategies for improving healthcare access worldwide",
-    journal: "MediScope Global Health",
+    journal: "AyushVeda Global Health",
     date: "14 Jan 2025",
     image: "/african-healthcare.jpg",
     category: "Article",
@@ -27,7 +27,7 @@ const carouselItems = [
     id: 3,
     title: "Climate Change and Public Health: A Critical Connection",
     subtitle: "Understanding the intersection of environmental factors and human health",
-    journal: "MediScope Environmental Health",
+    journal: "AyushVeda Naturopathy",
     date: "13 Jan 2025",
     image: "/climate-change-environmental-health.jpg",
     category: "Comment",
@@ -36,7 +36,7 @@ const carouselItems = [
     id: 4,
     title: "Breakthrough in Precision Medicine and Personalized Treatment",
     subtitle: "Tailoring medical interventions to individual patient characteristics",
-    journal: "MediScope Oncology",
+    journal: "AyushVeda Homeopathy",
     date: "12 Jan 2025",
     image: "/cancer-immunotherapy.jpg",
     category: "News",
@@ -83,10 +83,10 @@ export default function HeroCarousel() {
         }} />
       </div>
 
-        <div className="container mx-auto px-4 py-24 md:py-40 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Modern Content Design */}
-            <div className="space-y-10">
+            <div className="space-y-6">
             <div className="inline-flex items-center gap-3">
               <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
               <span className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
@@ -94,13 +94,13 @@ export default function HeroCarousel() {
               </span>
             </div>
 
-              <h1 className="text-6xl md:text-8xl font-bold leading-tight text-gray-900">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight text-gray-900">
                 <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
                   {item.title}
                 </span>
               </h1>
 
-              <p className="text-2xl md:text-3xl text-gray-600 leading-relaxed font-light max-w-2xl">
+              <p className="text-lg md:text-xl text-gray-600 leading-relaxed font-light max-w-2xl">
                 {item.subtitle}
               </p>
 
@@ -120,16 +120,16 @@ export default function HeroCarousel() {
               <div className="flex flex-col sm:flex-row gap-6">
               <Link
                 href={`/article/${item.id}`}
-                className="inline-flex items-center gap-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-8 py-4 rounded-2xl font-semibold transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 text-lg"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-base"
               >
                 Read Full Article
-                <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
-                  <ChevronRight size={16} />
+                <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+                  <ChevronRight size={14} />
                 </div>
               </Link>
               <Link
                 href="/journals"
-                className="inline-flex items-center gap-3 bg-white text-emerald-600 border-2 border-emerald-200 px-8 py-4 rounded-2xl font-semibold transition-all duration-300 hover:bg-emerald-50 hover:border-emerald-300 text-lg"
+                className="inline-flex items-center gap-2 bg-white text-emerald-600 border-2 border-emerald-200 px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:bg-emerald-50 hover:border-emerald-300 text-base"
               >
                 Browse All Journals
               </Link>
@@ -142,7 +142,7 @@ export default function HeroCarousel() {
               <img 
                 src={item.image || "/placeholder.svg"} 
                 alt={item.title} 
-                className="w-full h-[500px] object-cover" 
+                className="w-full h-[400px] md:h-[450px] object-cover" 
               />
               <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/20 via-transparent to-transparent" />
             </div>
@@ -153,7 +153,7 @@ export default function HeroCarousel() {
         </div>
 
           {/* Modern Carousel Controls */}
-          <div className="mt-20 flex items-center justify-between">
+          <div className="mt-12 flex items-center justify-between">
           {/* Modern Indicators */}
           <div className="flex gap-3">
             {carouselItems.map((_, index) => (
@@ -190,7 +190,7 @@ export default function HeroCarousel() {
         </div>
 
           {/* Modern Slide Counter */}
-          <div className="mt-12 text-center">
+          <div className="mt-8 text-center">
           <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg">
             <span className="text-sm text-gray-600">Article</span>
             <span className="text-emerald-600 font-bold">{currentSlide + 1}</span>

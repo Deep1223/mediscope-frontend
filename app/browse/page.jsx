@@ -1,14 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 import ArticleCard from "@/components/article-card"
 import { Grid, List } from "lucide-react"
+import { getLatestResearchData } from "../../lib/research-utils"
 
 export default function BrowsePage() {
   const [viewMode, setViewMode] = useState("grid")
   const [sortBy, setSortBy] = useState("recent")
+  const [articles, setArticles] = useState([])
 
   const categories = [
     { id: "all", name: "All Content", count: 2847 },
@@ -28,18 +30,11 @@ export default function BrowsePage() {
     { id: "child", name: "Lancet Child & Adolescent Health", count: 198 },
   ]
 
-  const articles = Array.from({ length: 24 }, (_, i) => ({
-    id: i + 1,
-    title: `Research Article ${i + 1}: Breakthrough in Medical Science`,
-    excerpt: `This groundbreaking research article explores new frontiers in medical treatment and patient care outcomes.`,
-    image: `/placeholder.svg?height=200&width=300&query=medical research ${i}`,
-    badge: ["RESEARCH", "NEWS", "COMMENT", "REVIEW"][i % 4],
-    badgeType: ["research", "news", "comment", "review"][i % 4],
-    journal: journals[i % journals.length].name,
-    authors: `Author ${i + 1} et al.`,
-    date: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-    link: `/article/${i + 1}`,
-  }))
+  // Load research data on component mount
+  useEffect(() => {
+    const researchData = getLatestResearchData()
+    setArticles(researchData)
+  }, [])
 
   return (
     <>

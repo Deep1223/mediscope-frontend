@@ -110,7 +110,7 @@ export default function RegisterPage() {
                 <Users className="text-white" size={24} />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Join MediScope</h2>
+                <h2 className="text-2xl font-bold">Join AyushVeda</h2>
                 <p className="text-white/90 text-sm">Medical Research Platform</p>
               </div>
             </div>
@@ -149,7 +149,7 @@ export default function RegisterPage() {
 
             <div className="mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-2xl">
               <p className="text-sm text-white/90">
-                "MediScope has revolutionized how we share and access medical research. The platform makes it easy to connect with peers and publish groundbreaking work."
+                "AyushVeda has revolutionized how we share and access AYUSH research. The platform makes it easy to connect with peers and publish groundbreaking traditional medicine work."
               </p>
               <p className="text-xs text-white/70 mt-2">- Dr. Sarah Chen, Stanford Medical School</p>
             </div>

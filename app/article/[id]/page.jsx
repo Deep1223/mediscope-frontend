@@ -1,16 +1,46 @@
 "use client"
 
-import { useState, useRef, use } from "react"
+import { useState, useRef, use, useEffect } from "react"
 import Link from "next/link"
 import { ArrowLeft, Calendar, User, BookOpen, Share2, Download, Heart, MessageCircle, Tag } from "lucide-react"
 import html2canvas from 'html2canvas'
+import { getPublishedArticle } from "../../../lib/api-utils"
 
 export default function ArticlePage({ params }) {
     const resolvedParams = use(params)
     const [isLiked, setIsLiked] = useState(false)
     const [showShare, setShowShare] = useState(false)
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
+    const [article, setArticle] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
     const articleRef = useRef(null)
+
+    useEffect(() => {
+        if (resolvedParams.id) {
+            fetchArticle(resolvedParams.id)
+        }
+    }, [resolvedParams.id])
+
+    const fetchArticle = async (id) => {
+        try {
+            setLoading(true)
+            setError(null)
+            
+            const response = await getPublishedArticle(id)
+            
+            if (response.success) {
+                setArticle(response.data.article)
+            } else {
+                setError(response.error || "Article not found")
+            }
+        } catch (err) {
+            setError("Failed to load article")
+            console.error("Error fetching article:", err)
+        } finally {
+            setLoading(false)
+        }
+    }
 
     const handleDownloadPDF = async () => {
         if (isGeneratingPDF) return
@@ -699,51 +729,54 @@ export default function ArticlePage({ params }) {
         }
     }
 
-    // Mock article data - in real app, this would come from API
-    const article = {
-        id: resolvedParams.id,
-        title: "Revolutionary AI-Driven Diagnostic Tools in Modern Medicine",
-        subtitle: "How artificial intelligence is transforming patient care and clinical decision-making",
-        image: "/ai-healthcare.png",
-        imageAlt: "AI-Driven Diagnostic Tools in Modern Medicine",
-        imageCaption: "Artificial intelligence is revolutionizing medical diagnosis and patient care",
-        content: `
-      <p>Artificial intelligence (AI) is revolutionizing the field of medicine, offering unprecedented opportunities to enhance diagnostic accuracy, improve patient outcomes, and streamline clinical workflows. This comprehensive study examines the latest developments in AI-driven diagnostic tools and their transformative impact on modern healthcare.</p>
-      
-      <h2>Introduction</h2>
-      <p>The integration of artificial intelligence into medical practice represents one of the most significant technological advances in healthcare history. From machine learning algorithms that can detect cancer in medical images to natural language processing systems that analyze patient records, AI is fundamentally changing how we approach medical diagnosis and treatment.</p>
-      
-      <h2>Methodology</h2>
-      <p>Our research team conducted a comprehensive analysis of AI diagnostic tools across multiple medical specialties. We examined over 500 peer-reviewed studies, analyzed data from 50+ healthcare institutions, and interviewed leading experts in the field of medical AI.</p>
-      
-      <h2>Key Findings</h2>
-      <p>The study reveals several groundbreaking insights:</p>
-      <ul>
-        <li>AI diagnostic tools show 95% accuracy in early cancer detection</li>
-        <li>Reduction in diagnostic time by an average of 40%</li>
-        <li>Significant improvement in patient outcomes across multiple specialties</li>
-        <li>Enhanced efficiency in radiology and pathology departments</li>
-      </ul>
-      
-      <h2>Clinical Applications</h2>
-      <p>AI diagnostic tools are being successfully implemented across various medical specialties, including radiology, pathology, cardiology, and dermatology. These tools not only improve diagnostic accuracy but also help healthcare providers make more informed treatment decisions.</p>
-      
-      <h2>Future Implications</h2>
-      <p>As AI technology continues to evolve, we can expect even more sophisticated diagnostic tools that will further enhance medical practice. The integration of AI into routine clinical workflows promises to improve patient care while reducing healthcare costs.</p>
-    `,
-        authors: [
-            { name: "Dr. Sarah Chen", affiliation: "Stanford Medical School", email: "s.chen@stanford.edu" },
-            { name: "Prof. Michael Rodriguez", affiliation: "Harvard Medical School", email: "m.rodriguez@harvard.edu" },
-            { name: "Dr. Emily Watson", affiliation: "Mayo Clinic", email: "e.watson@mayo.edu" }
-        ],
-        journal: "MediScope Technology",
-        date: "January 15, 2025",
-        doi: "10.1000/mediscope.2025.001",
-        keywords: ["Artificial Intelligence", "Medical Diagnosis", "Machine Learning", "Healthcare Technology", "Clinical Decision Support"],
-        abstract: "This study examines the revolutionary impact of AI-driven diagnostic tools in modern medicine, analyzing their effectiveness, clinical applications, and future potential in transforming healthcare delivery.",
-        citations: 42,
-        views: 1250,
-        downloads: 380
+    // Format date helper
+    const formatDate = (dateString) => {
+        if (!dateString) return 'Date not available'
+        try {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            })
+        } catch {
+            return dateString
+        }
+    }
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-emerald-50/30 to-teal-50/30 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading article...</p>
+                </div>
+            </div>
+        )
+    }
+
+    // Error state
+    if (error || !article) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-emerald-50/30 to-teal-50/30 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Article Not Found</h2>
+                    <p className="text-gray-600 mb-6">{error || "The article you're looking for doesn't exist or has been removed."}</p>
+                    <Link 
+                        href="/"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors"
+                    >
+                        <ArrowLeft size={20} />
+                        Back to Home
+                    </Link>
+                </div>
+            </div>
+        )
     }
 
     const relatedArticles = [
@@ -752,7 +785,7 @@ export default function ArticlePage({ params }) {
             title: "Precision Medicine Approaches in Cardiovascular Disease Management",
             excerpt: "Tailored therapeutic strategies improve outcomes in cardiovascular care",
             image: "/cardiometabolic-health.jpg",
-            journal: "MediScope Cardiology",
+            journal: "AyushVeda Ayurveda",
             date: "Jan 2025"
         },
         {
@@ -760,7 +793,7 @@ export default function ArticlePage({ params }) {
             title: "Digital Mental Health Interventions: Comparative Effectiveness",
             excerpt: "Technology-enhanced psychological treatments show promising results",
             image: "/mental-health-digital.jpg",
-            journal: "MediScope Psychiatry",
+            journal: "AyushVeda Unani",
             date: "Jan 2025"
         },
         {
@@ -768,7 +801,7 @@ export default function ArticlePage({ params }) {
             title: "Antimicrobial Stewardship in the Digital Age",
             excerpt: "Technology-driven approaches to combat antimicrobial resistance",
             image: "/antibiotic-research.jpg",
-            journal: "MediScope Medicine",
+            journal: "AyushVeda Ayurveda",
             date: "Jan 2025"
         }
     ]
@@ -848,7 +881,7 @@ export default function ArticlePage({ params }) {
                                 </h1>
 
                                 <p className="text-xl text-white/90 leading-relaxed mb-6">
-                                    {article.subtitle}
+                                    {article.articletype} • {article.journal}
                                 </p>
 
                                 {/* Article Meta */}
@@ -859,49 +892,36 @@ export default function ArticlePage({ params }) {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Calendar size={18} />
-                                        <span>{article.date}</span>
+                                        <span>{formatDate(article.date)}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <MessageCircle size={18} />
-                                        <span>{article.citations} Citations</span>
+                                        <Tag size={18} />
+                                        <span>{article.badgetype}</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Article Content */}
                             <div className="p-12p">
-                                {/* Abstract */}
-                                <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 mb-8 border border-emerald-100">
-                                    <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                                        <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
-                                            <span className="text-white font-bold text-sm">A</span>
-                                        </div>
-                                        Abstract
-                                    </h2>
-                                    <p className="text-gray-700 leading-relaxed text-lg">
-                                        {article.abstract}
-                                    </p>
-                                </div>
-
                                 {/* Article Image */}
+                                {article.image && (
                                 <div className="mb-8">
                                     <div className="relative overflow-hidden rounded-2xl shadow-lg">
                                         <img
-                                            src={article.image}
-                                            alt={article.imageAlt}
+                                                src={article.image.base64 || article.image}
+                                                alt={article.title}
                                             className="w-full h-64 md:h-80 object-cover"
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                                         <div className="absolute bottom-4 left-4 text-white">
-                                            <p className="text-sm font-medium opacity-90">AI Technology in Healthcare</p>
+                                                <p className="text-sm font-medium opacity-90">{article.journalcode}</p>
                                         </div>
                                     </div>
-                                    <p className="text-sm text-gray-500 mt-2 text-center italic">
-                                        {article.imageCaption}
-                                    </p>
                                 </div>
+                                )}
 
                                 {/* Keywords */}
+                                {article.keywords && article.keywords.length > 0 && (
                                 <div className="mb-8">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                                         <Tag size={20} className="text-emerald-600" />
@@ -918,11 +938,12 @@ export default function ArticlePage({ params }) {
                                         ))}
                                     </div>
                                 </div>
+                                )}
 
                                 {/* Main Content */}
                                 <div
                                     className="prose prose-lg max-w-none"
-                                    dangerouslySetInnerHTML={{ __html: article.content }}
+                                    dangerouslySetInnerHTML={{ __html: article.excerpt }}
                                 />
 
                                 {/* Authors */}
@@ -954,16 +975,16 @@ export default function ArticlePage({ params }) {
                                 {/* Article Stats */}
                                 <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div className="bg-emerald-50 rounded-xl p-4 text-center border border-emerald-100">
-                                        <div className="text-2xl font-bold text-emerald-600">{article.views}</div>
-                                        <div className="text-sm text-gray-600">Views</div>
+                                        <div className="text-2xl font-bold text-emerald-600">{article.journalcode}</div>
+                                        <div className="text-sm text-gray-600">Journal Code</div>
                                     </div>
                                     <div className="bg-teal-50 rounded-xl p-4 text-center border border-teal-100">
-                                        <div className="text-2xl font-bold text-teal-600">{article.downloads}</div>
-                                        <div className="text-sm text-gray-600">Downloads</div>
+                                        <div className="text-2xl font-bold text-teal-600">{article.badgetype}</div>
+                                        <div className="text-sm text-gray-600">Badge Type</div>
                                     </div>
                                     <div className="bg-cyan-50 rounded-xl p-4 text-center border border-cyan-100">
-                                        <div className="text-2xl font-bold text-cyan-600">{article.citations}</div>
-                                        <div className="text-sm text-gray-600">Citations</div>
+                                        <div className="text-2xl font-bold text-cyan-600">{article.articletype}</div>
+                                        <div className="text-sm text-gray-600">Article Type</div>
                                     </div>
                                 </div>
                             </div>
@@ -973,11 +994,11 @@ export default function ArticlePage({ params }) {
                     {/* Sidebar */}
                     <div className="lg:col-span-1">
                         <div className="sticky top-8 space-y-6">
-                            {/* DOI */}
+                            {/* Article ID */}
                             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-                                <h3 className="font-semibold text-gray-900 mb-3">DOI</h3>
+                                <h3 className="font-semibold text-gray-900 mb-3">Article ID</h3>
                                 <p className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded-lg">
-                                    {article.doi}
+                                    {article._id}
                                 </p>
                             </div>
 

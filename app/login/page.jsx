@@ -72,7 +72,7 @@ export default function LoginPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold">Welcome Back</h1>
-                <p className="text-white/90 text-sm">Sign in to your MediScope account</p>
+                <p className="text-white/90 text-sm">Sign in to your AyushVeda account</p>
               </div>
             </div>
           </div>
@@ -212,7 +212,7 @@ export default function LoginPage() {
                 <p className="text-sm font-semibold text-emerald-800">Demo Credentials</p>
               </div>
               <div className="space-y-1 text-sm">
-                <p className="text-emerald-700"><span className="font-medium">Email:</span> author@mediscope.com</p>
+                <p className="text-emerald-700"><span className="font-medium">Email:</span> author@ayushveda.com</p>
                 <p className="text-emerald-700"><span className="font-medium">Password:</span> demo123</p>
               </div>
             </div>

@@ -12,7 +12,7 @@ export default function Header() {
   const handleSearch = (e) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
+      window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`
     }
   }
 
@@ -59,7 +59,7 @@ export default function Header() {
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                  MediScope
+                  AyushVeda
                 </span>
                 <span className="text-xs text-gray-500 font-medium">Medical Research Platform</span>
               </div>
@@ -103,7 +103,7 @@ export default function Header() {
 
             {/* Mobile Menu Button */}
             <button
-              className="lg:hidden ml-4 p-2 hover:bg-mediscope-gray rounded-lg transition-colors"
+              className="lg:hidden ml-4 p-2 hover:bg-ayushveda-gray rounded-lg transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -113,13 +113,13 @@ export default function Header() {
 
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
-            <div className="lg:hidden pb-4 border-t border-mediscope-border">
+            <div className="lg:hidden pb-4 border-t border-ayushveda-border">
               <nav className="flex flex-col gap-2 mt-4">
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="nav-link-main text-sm font-medium px-3 py-2 rounded hover:bg-mediscope-gray transition-colors"
+                    className="nav-link-main text-sm font-medium px-3 py-2 rounded hover:bg-ayushveda-gray transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {link.label}
@@ -132,15 +132,15 @@ export default function Header() {
                 <input
                   type="text"
                   placeholder="Search articles..."
-                  className="w-full px-4 py-2 border border-mediscope-border rounded-lg text-sm focus:outline-none focus:border-mediscope-primary focus:ring-2 focus:ring-mediscope-primary/10"
+                  className="w-full px-4 py-2 border border-ayushveda-border rounded-lg text-sm focus:outline-none focus:border-ayushveda-primary focus:ring-2 focus:ring-ayushveda-primary/10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <div className="flex gap-2">
-                  <button type="submit" className="btn btn-mediscope flex-1 text-sm py-2">
+                  <button type="submit" className="btn btn-ayushveda flex-1 text-sm py-2">
                     Search
                   </button>
-                  <Link href="/advanced-search" className="btn btn-mediscope-outline flex-1 text-sm py-2 text-center">
+                  <Link href="/advanced-search" className="btn btn-ayushveda-outline flex-1 text-sm py-2 text-center">
                     Advanced
                   </Link>
                 </div>

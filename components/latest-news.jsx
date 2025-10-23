@@ -6,12 +6,12 @@ export default function LatestNews() {
   const newsItems = [
     {
       id: 1,
-      title: "MediScope Global Health Initiative Launches in Africa",
+      title: "AyushVeda Global Health Initiative Launches in Africa",
       excerpt: "A comprehensive platform promoting clinical excellence and health policy advancement across African nations",
       image: "/african-healthcare-medical.jpg",
       badge: "NEW INITIATIVE",
       badgeType: "research",
-      journal: "MediScope Global Health",
+      journal: "AyushVeda Global Health",
       authors: "Editorial Team",
       date: "Jan 2025",
       link: "/article/1",
@@ -23,7 +23,7 @@ export default function LatestNews() {
       image: "/climate-change-environmental-health.jpg",
       badge: "COMMENT",
       badgeType: "comment",
-      journal: "MediScope Medicine",
+      journal: "AyushVeda Ayurveda",
       authors: "Environmental Health Research Group",
       date: "Jan 2025",
       link: "/article/2",
@@ -35,7 +35,7 @@ export default function LatestNews() {
       image: "/sustainable-development-goals-health.jpg",
       badge: "COMMENT",
       badgeType: "comment",
-      journal: "MediScope Medicine",
+      journal: "AyushVeda Ayurveda",
       authors: "Global Health Policy Team",
       date: "Jan 2025",
       link: "/article/3",
@@ -47,7 +47,7 @@ export default function LatestNews() {
       image: "/artificial-intelligence-healthcare-nhs.jpg",
       badge: "NEWS",
       badgeType: "news",
-      journal: "MediScope Technology",
+      journal: "AyushVeda Yoga",
       authors: "AI Research Division",
       date: "Jan 2025",
       link: "/article/4",
@@ -55,22 +55,22 @@ export default function LatestNews() {
   ]
 
     return (
-      <section className="py-24 md:py-40 bg-gradient-to-br from-gray-50 via-emerald-50/30 to-teal-50/30">
+      <section className="py-12 md:py-16 bg-gradient-to-br from-gray-50 via-emerald-50/30 to-teal-50/30">
         <div className="container mx-auto px-4">
           {/* Modern Section Header */}
-          <div className="text-center mb-20">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-            <span className="text-emerald-600 font-semibold text-sm uppercase tracking-wider">Latest Updates</span>
-            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-          </div>
-            <h2 className="text-5xl md:text-7xl font-bold text-gray-900 mb-8">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 mb-4">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+              <span className="text-emerald-600 font-semibold text-sm uppercase tracking-wider">Latest Updates</span>
+              <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+            </div>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
               <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
                 Latest News & Commentary
               </span>
             </h2>
-            <p className="text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-              Stay updated with the latest research, news, and expert commentary from MediScope Publications
+            <p className="text-lg md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+              Stay updated with the latest research, news, and expert commentary from AyushVeda Publications
             </p>
           </div>
 
@@ -82,7 +82,7 @@ export default function LatestNews() {
         </div>
 
           {/* Modern View All Link */}
-          <div className="mt-20 text-center">
+          <div className="mt-12 text-center">
           <a
             href="/news"
             className="inline-flex items-center gap-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-8 py-4 rounded-2xl font-semibold transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 text-lg"
