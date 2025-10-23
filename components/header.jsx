@@ -17,7 +17,7 @@ export default function Header() {
   }
 
   const navLinks = [
-    { href: "/journals", label: "Journals" },
+    // { href: "/journals", label: "Journals" },
     // { href: "/for-authors", label: "Publish" },
     // { href: "/clinical", label: "Clinical" },
     // { href: "/global-health", label: "Global Health" },
