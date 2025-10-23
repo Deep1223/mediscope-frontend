@@ -1,95 +1,30 @@
 import { NextResponse } from 'next/server'
 
-// Mock data - same as in the main articles route
-const mockArticles = [
-  {
-    _id: "id_1703123456789_abc123",
-    title: "Advanced Research in Ayurvedic Medicine",
-    journal: "AyushVeda Ayurveda",
-    journalid: 1,
-    articletype: "Original Research",
-    articletypeid: 1,
-    keywords: ["OPEN ACCESS", "RESEARCH", "AYURVEDA"],
-    excerpt: "<p>This study explores the efficacy of traditional Ayurvedic treatments in modern healthcare settings.</p>",
-    badgetype: "Research",
-    badgetypeid: 1,
-    date: "2024-01-15",
-    journalcode: "Ayurveda",
-    journalcodeid: 7,
-    status: 1,
-    authors: [
-      {
-        name: "Dr. Rajesh Kumar",
-        email: "rajesh@example.com",
-        affiliation: "Ayurvedic Research Institute"
-      }
-    ],
-    recordinfo: {
-      entryBy: "1760636856216",
-      entryTime: "2024-01-15T10:30:00.000Z",
-      updateBy: "1760636856216",
-      updateTime: "2024-01-15T10:30:00.000Z"
+// Base URL for the external API
+const API_BASE_URL = 'https://brockersbackend.finnovationz.com'
+
+// Function to fetch article from external API
+async function fetchArticleFromAPI(id) {
+  try {
+    const url = `${API_BASE_URL}/api/article/public/articles/${id}`
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
     }
-  },
-  {
-    _id: "id_1703123456790_def456",
-    title: "Yoga Therapy for Mental Health",
-    journal: "AyushVeda Yoga",
-    journalid: 2,
-    articletype: "Review Article",
-    articletypeid: 2,
-    keywords: ["YOGA", "MENTAL HEALTH", "THERAPY"],
-    excerpt: "<p>A comprehensive review of yoga-based interventions for mental health conditions.</p>",
-    badgetype: "Open Access",
-    badgetypeid: 2,
-    date: "2024-01-20",
-    journalcode: "Yoga",
-    journalcodeid: 8,
-    status: 1,
-    authors: [
-      {
-        name: "Dr. Priya Sharma",
-        email: "priya@example.com",
-        affiliation: "Yoga Research Center"
-      }
-    ],
-    recordinfo: {
-      entryBy: "1760636856216",
-      entryTime: "2024-01-20T14:15:00.000Z",
-      updateBy: "1760636856216",
-      updateTime: "2024-01-20T14:15:00.000Z"
-    }
-  },
-  {
-    _id: "id_1703123456791_ghi789",
-    title: "Naturopathic Approaches to Chronic Disease",
-    journal: "AyushVeda Naturopathy",
-    journalid: 3,
-    articletype: "Case Report",
-    articletypeid: 4,
-    keywords: ["NATUROPATHY", "CHRONIC DISEASE", "HEALING"],
-    excerpt: "<p>Case studies demonstrating the effectiveness of naturopathic treatments for chronic conditions.</p>",
-    badgetype: "Research",
-    badgetypeid: 1,
-    date: "2024-01-25",
-    journalcode: "Naturopathy",
-    journalcodeid: 9,
-    status: 1,
-    authors: [
-      {
-        name: "Dr. Michael Chen",
-        email: "michael@example.com",
-        affiliation: "Naturopathic Medical College"
-      }
-    ],
-    recordinfo: {
-      entryBy: "1760636856216",
-      entryTime: "2024-01-25T09:45:00.000Z",
-      updateBy: "1760636856216",
-      updateTime: "2024-01-25T09:45:00.000Z"
-    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching article from API:', error)
+    throw error
   }
-]
+}
 
 // GET /api/article/public/articles/[id]
 export async function GET(request, { params }) {
@@ -106,10 +41,59 @@ export async function GET(request, { params }) {
       )
     }
     
-    // Find the article by ID
-    const article = mockArticles.find(article => article._id === id)
+    // Fetch article from external API
+    const apiResponse = await fetchArticleFromAPI(id)
     
-    if (!article) {
+    if (apiResponse.success && apiResponse.data) {
+      // The external API returns article data directly in data field, not data.article
+      const article = apiResponse.data
+      
+      // Check if article is published (status = 1 or "1")
+      if (article.status !== 1 && article.status !== "1") {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Article is not published' 
+          },
+          { status: 403 }
+        )
+      }
+      
+      // Transform article to match expected format
+      const transformedArticle = {
+        _id: article._id,
+        title: article.title,
+        journal: article.journal,
+        journalid: article.journalid,
+        articletype: article.articleType || article.articletype,
+        articletypeid: article.articletypeid,
+        keywords: article.keywords || [],
+        excerpt: article.excerpt,
+        badgetype: article.badgeType || article.badgetype,
+        badgetypeid: article.badgetypeid,
+        date: article.date,
+        journalcode: article.journalCode || article.journalcode,
+        journalcodeid: article.journalcodeid,
+        status: 1, // Ensure status is always 1 for published articles
+        authors: article.authors || [],
+        recordinfo: {
+          entryBy: article.createdBy || "system",
+          entryTime: article.createdAt || article.date,
+          updateBy: article.lastModifiedBy || "system",
+          updateTime: article.updatedAt || article.date
+        },
+        image: article.image
+      }
+      
+      const response = {
+        success: true,
+        data: {
+          article: transformedArticle
+        }
+      }
+      
+      return NextResponse.json(response)
+    } else {
       return NextResponse.json(
         { 
           success: false, 
@@ -118,26 +102,6 @@ export async function GET(request, { params }) {
         { status: 404 }
       )
     }
-    
-    // Check if article is published (status = 1)
-    if (article.status !== 1) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Article is not published' 
-        },
-        { status: 403 }
-      )
-    }
-    
-    const response = {
-      success: true,
-      data: {
-        article
-      }
-    }
-    
-    return NextResponse.json(response)
     
   } catch (error) {
     console.error('Error fetching article:', error)

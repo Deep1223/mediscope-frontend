@@ -46,6 +46,8 @@ export default function SubmitResearchPage() {
   const [showFilePreviewModal, setShowFilePreviewModal] = useState(false)
   const [showImagePreviewModal, setShowImagePreviewModal] = useState(false)
   const [imagePreviewUrl, setImagePreviewUrl] = useState(null)
+  const [imageUploading, setImageUploading] = useState(false)
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(null)
 
   // Jodit editor configuration
   const joditConfig = {
@@ -97,8 +99,6 @@ export default function SubmitResearchPage() {
     }
   }
 
-  // localStorage key
-  const STORAGE_KEY = 'submit-research'
 
   // Generate unique ID for the submission
   const generateId = () => {
@@ -129,6 +129,36 @@ export default function SubmitResearchPage() {
     }
     return new File([u8arr], filename, { type: mimeType || mime })
   }
+
+  // Upload image to server
+  const uploadImage = async (file) => {
+    try {
+      setImageUploading(true)
+      
+      const formData = new FormData()
+      formData.append('image', file)
+      
+      const response = await fetch('/api/article/upload', {
+        method: 'POST',
+        body: formData
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        setUploadedImageUrl(result.imageUrl)
+        return result.imageUrl
+      } else {
+        throw new Error(result.error || 'Upload failed')
+      }
+    } catch (error) {
+      console.error('Image upload error:', error)
+      throw error
+    } finally {
+      setImageUploading(false)
+    }
+  }
+
 
   // Set data loaded to true on component mount
   useEffect(() => {
@@ -394,6 +424,15 @@ export default function SubmitResearchPage() {
             console.log('imagePreviewUrl after setState:', url)
           }, 100)
         }
+        
+        // Automatically upload the image when selected
+        uploadImage(file).then((imageUrl) => {
+          console.log('Image uploaded successfully:', imageUrl)
+          setFormData(prev => ({ ...prev, imageUrl: imageUrl }))
+        }).catch((error) => {
+          console.error('Failed to upload image:', error)
+          alert(`Failed to upload image: ${error.message}`)
+        })
       }
     })
   }
@@ -407,11 +446,12 @@ export default function SubmitResearchPage() {
       }
       setShowPreview(false)
     } else if (fileType === "image") {
-      setFormData({ ...formData, image: null })
+      setFormData({ ...formData, image: null, imageUrl: null })
       if (imagePreviewUrl) {
         URL.revokeObjectURL(imagePreviewUrl)
         setImagePreviewUrl(null)
       }
+      setUploadedImageUrl(null)
       setShowImagePreviewModal(false)
     }
   }
@@ -449,15 +489,12 @@ export default function SubmitResearchPage() {
         }
       }
       
-      // Convert image to base64 if present
-      if (formData.image && formData.image instanceof File) {
-        const base64 = await fileToBase64(formData.image)
-        submissionData.image = {
-          name: formData.image.name,
-          type: formData.image.type,
-          size: formData.image.size,
-          base64: base64
-        }
+      // Use uploaded image URL if available, otherwise use File object
+      if (formData.imageUrl) {
+        // If we have an uploaded URL, we'll send it as a string field
+        submissionData.imageUrl = formData.imageUrl
+        // Remove the File object since we're using the URL
+        delete submissionData.image
       }
       
       // Submit to API
@@ -466,18 +503,6 @@ export default function SubmitResearchPage() {
       
       if (response.success) {
         setSuccessMessage("Submission successful! Your research has been submitted for review.")
-        
-        // Also save to localStorage as backup
-        if (typeof window !== 'undefined') {
-          try {
-            const existingSubmissions = JSON.parse(localStorage.getItem('submit-research') || '[]')
-            existingSubmissions.push(submissionData)
-            localStorage.setItem('submit-research', JSON.stringify(existingSubmissions))
-            console.log('Backup saved to localStorage:', submissionData)
-          } catch (error) {
-            console.error('Error saving backup to localStorage:', error)
-          }
-        }
         
         // Redirect to home page after 2 seconds
         setTimeout(() => {
@@ -765,6 +790,24 @@ export default function SubmitResearchPage() {
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-green-700 text-sm font-medium">{formData.image.name}</span>
                       <div className="flex items-center gap-2">
+                        {imageUploading && (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                            <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            Uploading...
+                          </span>
+                        )}
+                        {uploadedImageUrl && !imageUploading && (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                            <CheckCircle size={14} />
+                            Uploaded
+                          </span>
+                        )}
+                        {!uploadedImageUrl && !imageUploading && (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full">
+                            <CheckCircle size={14} />
+                            Ready
+                          </span>
+                        )}
                         {formData.image.type.startsWith('image/') && (
                           <button
                             type="button"
@@ -791,6 +834,16 @@ export default function SubmitResearchPage() {
                     <div className="text-xs text-gray-600">
                       {(formData.image.size / 1024 / 1024).toFixed(2)} MB • {formData.image.type}
                     </div>
+                    {uploadedImageUrl && (
+                      <div className="mt-2 text-xs text-gray-500">
+                        <span className="font-medium">Uploaded URL:</span> {uploadedImageUrl}
+                      </div>
+                    )}
+                    {!uploadedImageUrl && !imageUploading && (
+                      <div className="mt-2 text-xs text-gray-500">
+                        <span className="font-medium">Status:</span> Will be uploaded when selected
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -971,31 +1024,49 @@ export default function SubmitResearchPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Featured Image</label>
                     <div className="bg-gray-50 p-4 rounded-lg border">
                       {formData.image ? (
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <FileImage className="text-emerald-600" size={20} />
-                            <div>
-                              <p className="font-medium text-gray-900">{formData.image.name}</p>
-                              <p className="text-sm text-gray-500">
-                                {(formData.image.size / 1024 / 1024).toFixed(2)} MB • {formData.image.type}
-                              </p>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <FileImage className="text-emerald-600" size={20} />
+                              <div>
+                                <p className="font-medium text-gray-900">{formData.image.name}</p>
+                                <p className="text-sm text-gray-500">
+                                  {(formData.image.size / 1024 / 1024).toFixed(2)} MB • {formData.image.type}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {formData.image.type.startsWith('image/') && (
+                                <button
+                                  type="button"
+                                  onClick={() => setShowImagePreviewModal(true)}
+                                  className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full hover:bg-blue-200 transition-colors"
+                                >
+                                  <Eye size={14} />
+                                  Preview
+                                </button>
+                              )}
+                              {uploadedImageUrl ? (
+                                <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                  Uploaded
+                                </span>
+                              ) : (
+                                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                                  Local
+                                </span>
+                              )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {formData.image.type.startsWith('image/') && (
-                              <button
-                                type="button"
-                                onClick={() => setShowImagePreviewModal(true)}
-                                className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full hover:bg-blue-200 transition-colors"
-                              >
-                                <Eye size={14} />
-                                Preview
-                              </button>
-                            )}
-                            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                              Uploaded
-                            </span>
-                          </div>
+                          {uploadedImageUrl && (
+                            <div className="text-xs text-gray-600 bg-white p-2 rounded border">
+                              <span className="font-medium">Uploaded URL:</span> {uploadedImageUrl}
+                            </div>
+                          )}
+                          {!uploadedImageUrl && (
+                            <div className="text-xs text-gray-600 bg-white p-2 rounded border">
+                              <span className="font-medium">Status:</span> Local file - will be uploaded with form submission
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <p className="text-gray-500">No image uploaded</p>

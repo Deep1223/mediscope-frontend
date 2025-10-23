@@ -110,7 +110,7 @@ export default function ArticleCard({ article }) {
           </div>
           
           <Link
-            href={`/article/${article._id}`}
+            href={`/article/${article._id || article.id}`}
             className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors"
           >
             Read More
@@ -121,25 +121,33 @@ export default function ArticleCard({ article }) {
         </div>
 
         {/* Authors */}
-        {article.authors && article.authors.length > 0 && (
+        {article.authors && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex items-center gap-2 mb-2">
               <User size={14} className="text-gray-500" />
               <span className="text-sm font-medium text-gray-700">Authors:</span>
             </div>
             <div className="flex flex-wrap gap-2">
-              {article.authors.slice(0, 3).map((author, index) => (
-                <div key={index} className="text-sm text-gray-600">
-                  <span className="font-medium">{author.name}</span>
-                  {author.affiliation && (
-                    <span className="text-gray-500"> - {author.affiliation}</span>
+              {Array.isArray(article.authors) ? (
+                <>
+                  {article.authors.slice(0, 3).map((author, index) => (
+                    <div key={index} className="text-sm text-gray-600">
+                      <span className="font-medium">{author.name}</span>
+                      {author.affiliation && (
+                        <span className="text-gray-500"> - {author.affiliation}</span>
+                      )}
+                    </div>
+                  ))}
+                  {article.authors.length > 3 && (
+                    <span className="text-sm text-gray-500">
+                      and {article.authors.length - 3} more
+                    </span>
                   )}
+                </>
+              ) : (
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">{article.authors}</span>
                 </div>
-              ))}
-              {article.authors.length > 3 && (
-                <span className="text-sm text-gray-500">
-                  and {article.authors.length - 3} more
-                </span>
               )}
             </div>
           </div>

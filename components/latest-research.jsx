@@ -2,28 +2,80 @@
 
 import { useState, useEffect } from "react"
 import ArticleCard from "./article-card"
-import { Search, X } from "lucide-react"
-import { getLatestResearchData } from "../lib/research-utils"
+import { Search, X, Loader2 } from "lucide-react"
 
 export default function LatestResearch() {
   const [selectedJournal, setSelectedJournal] = useState("all")
   const [selectedType, setSelectedType] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
   const [allArticles, setAllArticles] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  // Fetch research data from API
+  const fetchArticles = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const response = await fetch('/api/article/public/articles?limit=50&sortBy=date&sortOrder=desc')
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      
+      if (data.success && data.data && data.data.articles) {
+        // Transform API data to match component expectations
+        const transformedArticles = data.data.articles.map(article => ({
+          id: article._id,
+          _id: article._id,
+          title: article.title,
+          excerpt: article.excerpt,
+          image: article.image || "/placeholder.jpg",
+          badge: article.keywords?.[0]?.toUpperCase() || "RESEARCH",
+          badgeType: article.badgetype || "research",
+          journal: article.journal,
+          journalCode: article.journalcode,
+          authors: Array.isArray(article.authors) ? article.authors : 
+                   (typeof article.authors === 'string' ? article.authors.split(',').map(author => author.trim()) : []),
+          date: new Date(article.date || article.recordinfo?.entryTime).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short'
+          }),
+          link: `/article/${article._id}`,
+          type: "research",
+          articletype: article.articletype || "Original Research",
+          status: article.status,
+          entryTime: article.recordinfo?.entryTime || article.date
+        }))
+        
+        setAllArticles(transformedArticles)
+      } else {
+        setAllArticles([])
+      }
+    } catch (err) {
+      console.error('Error fetching articles:', err)
+      setError(err.message)
+      setAllArticles([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Load research data on component mount
   useEffect(() => {
-    const researchData = getLatestResearchData()
-    setAllArticles(researchData)
+    fetchArticles()
   }, [])
 
   const filteredArticles = allArticles.filter((article) => {
     const matchesJournal = selectedJournal === "all" || article.journalCode === selectedJournal
-    const matchesType = selectedType === "all" || article.type === selectedType
+    const matchesType = selectedType === "all" || article.articletype === selectedType
     const matchesSearch =
       searchTerm === "" ||
       article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.authors.toLowerCase().includes(searchTerm.toLowerCase())
+      (typeof article.authors === 'string' ? article.authors.toLowerCase() : '').includes(searchTerm.toLowerCase())
     return matchesJournal && matchesType && matchesSearch
   })
 
@@ -114,7 +166,14 @@ export default function LatestResearch() {
                 <h4 className="filter-group-title">Article Type</h4>
                 {[
                   { value: "all", label: "All Types" },
-                  { value: "research", label: "Research" },
+                  { value: "Original Research", label: "Original Research" },
+                  { value: "Review Article", label: "Review Article" },
+                  { value: "Commentary", label: "Commentary" },
+                  { value: "Case Report", label: "Case Report" },
+                  { value: "Letter to the Editor", label: "Letter to the Editor" },
+                  { value: "Editorial", label: "Editorial" },
+                  { value: "Clinical Trial", label: "Clinical Trial" },
+                  { value: "Meta-Analysis", label: "Meta-Analysis" },
                 ].map((option) => (
                   <div key={option.value} className="filter-option">
                     <input
@@ -142,7 +201,25 @@ export default function LatestResearch() {
 
           {/* Articles Grid */}
           <div className="lg:col-span-3">
-            {filteredArticles.length > 0 ? (
+            {loading ? (
+              <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-12 text-center">
+                <Loader2 size={32} className="mx-auto text-emerald-500 mb-4 animate-spin" />
+                <p className="text-gray-600 font-medium">Loading latest research...</p>
+                <p className="text-gray-500 text-sm mt-2">Fetching articles from the server</p>
+              </div>
+            ) : error ? (
+              <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-12 text-center">
+                <Search size={32} className="mx-auto text-red-400 mb-4" />
+                <p className="text-red-600 font-medium">Error loading articles</p>
+                <p className="text-gray-500 text-sm mt-2">{error}</p>
+                <button
+                  onClick={fetchArticles}
+                  className="mt-4 bg-emerald-500 text-white px-6 py-2 rounded-xl font-semibold transition-colors hover:bg-emerald-600"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : filteredArticles.length > 0 ? (
               <>
                 {/* Results Count */}
                 <div className="mb-6 text-sm text-gray-600">
@@ -153,7 +230,7 @@ export default function LatestResearch() {
                 {/* Articles Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-16">
                   {filteredArticles.map((article) => (
-                    <ArticleCard key={article.id} {...article} />
+                    <ArticleCard key={article.id} article={article} />
                   ))}
                 </div>
 

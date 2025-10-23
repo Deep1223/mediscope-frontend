@@ -1,95 +1,53 @@
 import { NextResponse } from 'next/server'
 
-// Mock data for demonstration - replace with actual database queries
-const mockArticles = [
-  {
-    _id: "id_1703123456789_abc123",
-    title: "Advanced Research in Ayurvedic Medicine",
-    journal: "AyushVeda Ayurveda",
-    journalid: 1,
-    articletype: "Original Research",
-    articletypeid: 1,
-    keywords: ["OPEN ACCESS", "RESEARCH", "AYURVEDA"],
-    excerpt: "<p>This study explores the efficacy of traditional Ayurvedic treatments in modern healthcare settings.</p>",
-    badgetype: "Research",
-    badgetypeid: 1,
-    date: "2024-01-15",
-    journalcode: "Ayurveda",
-    journalcodeid: 7,
-    status: 1,
-    authors: [
-      {
-        name: "Dr. Rajesh Kumar",
-        email: "rajesh@example.com",
-        affiliation: "Ayurvedic Research Institute"
-      }
-    ],
-    recordinfo: {
-      entryBy: "1760636856216",
-      entryTime: "2024-01-15T10:30:00.000Z",
-      updateBy: "1760636856216",
-      updateTime: "2024-01-15T10:30:00.000Z"
+// Base URL for the external API
+const API_BASE_URL = 'https://brockersbackend.finnovationz.com'
+
+// Function to fetch articles from external API
+async function fetchArticlesFromAPI(params = {}) {
+  try {
+    const queryParams = new URLSearchParams()
+    
+    // Add pagination
+    if (params.page) queryParams.append('page', params.page)
+    if (params.limit) queryParams.append('limit', params.limit)
+    
+    // Add sorting
+    if (params.sortBy) queryParams.append('sortBy', params.sortBy)
+    if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder)
+    
+    // Add filters
+    if (params.title) queryParams.append('title', params.title)
+    if (params.journal) queryParams.append('journal', params.journal)
+    if (params.articleType) queryParams.append('articleType', params.articleType)
+    if (params.keywords && params.keywords.length > 0) {
+      params.keywords.forEach(keyword => queryParams.append('keywords', keyword))
     }
-  },
-  {
-    _id: "id_1703123456790_def456",
-    title: "Yoga Therapy for Mental Health",
-    journal: "AyushVeda Yoga",
-    journalid: 2,
-    articletype: "Review Article",
-    articletypeid: 2,
-    keywords: ["YOGA", "MENTAL HEALTH", "THERAPY"],
-    excerpt: "<p>A comprehensive review of yoga-based interventions for mental health conditions.</p>",
-    badgetype: "Open Access",
-    badgetypeid: 2,
-    date: "2024-01-20",
-    journalcode: "Yoga",
-    journalcodeid: 8,
-    status: 1,
-    authors: [
-      {
-        name: "Dr. Priya Sharma",
-        email: "priya@example.com",
-        affiliation: "Yoga Research Center"
-      }
-    ],
-    recordinfo: {
-      entryBy: "1760636856216",
-      entryTime: "2024-01-20T14:15:00.000Z",
-      updateBy: "1760636856216",
-      updateTime: "2024-01-20T14:15:00.000Z"
+    if (params.badgeType) queryParams.append('badgeType', params.badgeType)
+    if (params.startDate) queryParams.append('startDate', params.startDate)
+    if (params.endDate) queryParams.append('endDate', params.endDate)
+    if (params.journalCode) queryParams.append('journalCode', params.journalCode)
+    
+    const queryString = queryParams.toString()
+    const url = `${API_BASE_URL}/api/article/public/articles${queryString ? `?${queryString}` : ''}`
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
     }
-  },
-  {
-    _id: "id_1703123456791_ghi789",
-    title: "Naturopathic Approaches to Chronic Disease",
-    journal: "AyushVeda Naturopathy",
-    journalid: 3,
-    articletype: "Case Report",
-    articletypeid: 4,
-    keywords: ["NATUROPATHY", "CHRONIC DISEASE", "HEALING"],
-    excerpt: "<p>Case studies demonstrating the effectiveness of naturopathic treatments for chronic conditions.</p>",
-    badgetype: "Research",
-    badgetypeid: 1,
-    date: "2024-01-25",
-    journalcode: "Naturopathy",
-    journalcodeid: 9,
-    status: 1,
-    authors: [
-      {
-        name: "Dr. Michael Chen",
-        email: "michael@example.com",
-        affiliation: "Naturopathic Medical College"
-      }
-    ],
-    recordinfo: {
-      entryBy: "1760636856216",
-      entryTime: "2024-01-25T09:45:00.000Z",
-      updateBy: "1760636856216",
-      updateTime: "2024-01-25T09:45:00.000Z"
-    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching articles from API:', error)
+    throw error
   }
-]
+}
 
 // GET /api/article/public/articles
 export async function GET(request) {
@@ -110,107 +68,91 @@ export async function GET(request) {
     const endDate = searchParams.get('endDate')
     const journalCode = searchParams.get('journalCode')
     
-    // Filter articles (only published ones with status = 1)
-    let filteredArticles = mockArticles.filter(article => article.status === 1)
-    
-    // Apply filters
-    if (title) {
-      filteredArticles = filteredArticles.filter(article =>
-        article.title.toLowerCase().includes(title.toLowerCase())
-      )
+    // Prepare parameters for API call
+    const apiParams = {
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+      title,
+      journal,
+      articleType,
+      keywords: keywords.length > 0 ? keywords : undefined,
+      badgeType,
+      startDate,
+      endDate,
+      journalCode
     }
     
-    if (journal) {
-      filteredArticles = filteredArticles.filter(article =>
-        article.journal === journal
-      )
-    }
+    // Fetch articles from external API
+    const apiResponse = await fetchArticlesFromAPI(apiParams)
     
-    if (articleType) {
-      filteredArticles = filteredArticles.filter(article =>
-        article.articletype === articleType
+    // Filter articles to only show those with status = 1 (published)
+    if (apiResponse.success && apiResponse.data && apiResponse.data.articles) {
+      const publishedArticles = apiResponse.data.articles.filter(article => 
+        article.status === 1 || article.status === "1"
       )
-    }
-    
-    if (keywords.length > 0) {
-      filteredArticles = filteredArticles.filter(article =>
-        keywords.some(keyword =>
-          article.keywords.some(articleKeyword =>
-            articleKeyword.toLowerCase().includes(keyword.toLowerCase())
-          )
-        )
-      )
-    }
-    
-    if (badgeType) {
-      filteredArticles = filteredArticles.filter(article =>
-        article.badgetype === badgeType
-      )
-    }
-    
-    if (startDate) {
-      filteredArticles = filteredArticles.filter(article =>
-        article.date >= startDate
-      )
-    }
-    
-    if (endDate) {
-      filteredArticles = filteredArticles.filter(article =>
-        article.date <= endDate
-      )
-    }
-    
-    if (journalCode) {
-      filteredArticles = filteredArticles.filter(article =>
-        article.journalcode === journalCode
-      )
-    }
-    
-    // Sort articles
-    filteredArticles.sort((a, b) => {
-      let aValue = a[sortBy]
-      let bValue = b[sortBy]
       
-      // Handle date sorting
-      if (sortBy === 'date') {
-        aValue = new Date(aValue)
-        bValue = new Date(bValue)
-      }
+      // Transform articles to match expected format
+      const transformedArticles = publishedArticles.map(article => ({
+        _id: article._id,
+        title: article.title,
+        journal: article.journal,
+        journalid: article.journalid,
+        articletype: article.articleType || article.articletype,
+        articletypeid: article.articletypeid,
+        keywords: article.keywords || [],
+        excerpt: article.excerpt,
+        badgetype: article.badgeType || article.badgetype,
+        badgetypeid: article.badgetypeid,
+        date: article.date,
+        journalcode: article.journalCode || article.journalcode,
+        journalcodeid: article.journalcodeid,
+        status: 1, // Ensure status is always 1 for published articles
+        authors: article.authors || [],
+        recordinfo: {
+          entryBy: article.createdBy || "system",
+          entryTime: article.createdAt || article.date,
+          updateBy: article.lastModifiedBy || "system",
+          updateTime: article.updatedAt || article.date
+        },
+        image: article.image
+      }))
       
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1
-      } else {
-        return aValue < bValue ? 1 : -1
-      }
-    })
-    
-    // Pagination
-    const startIndex = (page - 1) * limit
-    const endIndex = startIndex + limit
-    const paginatedArticles = filteredArticles.slice(startIndex, endIndex)
-    
-    // Calculate pagination info
-    const totalArticles = filteredArticles.length
-    const totalPages = Math.ceil(totalArticles / limit)
-    const hasNextPage = page < totalPages
-    const hasPrevPage = page > 1
-    
-    const response = {
-      success: true,
-      data: {
-        articles: paginatedArticles,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalArticles,
-          hasNextPage,
-          hasPrevPage,
-          limit
+      // Update the response with filtered and transformed articles
+      const response = {
+        success: true,
+        data: {
+          articles: transformedArticles,
+          pagination: {
+            currentPage: apiResponse.data.pagination?.current || 1,
+            totalPages: apiResponse.data.pagination?.pages || 1,
+            totalArticles: transformedArticles.length,
+            hasNextPage: (apiResponse.data.pagination?.current || 1) < (apiResponse.data.pagination?.pages || 1),
+            hasPrevPage: (apiResponse.data.pagination?.current || 1) > 1,
+            limit: apiResponse.data.pagination?.limit || limit
+          }
         }
       }
+      
+      return NextResponse.json(response)
+    } else {
+      // If API response is not in expected format, return empty result
+      return NextResponse.json({
+        success: true,
+        data: {
+          articles: [],
+          pagination: {
+            currentPage: page,
+            totalPages: 0,
+            totalArticles: 0,
+            hasNextPage: false,
+            hasPrevPage: false,
+            limit
+          }
+        }
+      })
     }
-    
-    return NextResponse.json(response)
     
   } catch (error) {
     console.error('Error fetching published articles:', error)
@@ -228,7 +170,30 @@ export async function GET(request) {
 // POST /api/article/public/articles (for submitting new articles)
 export async function POST(request) {
   try {
-    const articleData = await request.json()
+    const formData = await request.formData()
+    
+    // Extract form data
+    const articleData = {
+      title: formData.get('title'),
+      journal: formData.get('journal'),
+      journalid: formData.get('journalid'),
+      articleType: formData.get('articleType'),
+      articletype: formData.get('articleType'),
+      articletypeid: formData.get('articletypeid'),
+      keywords: formData.get('keywords') ? JSON.parse(formData.get('keywords')) : [],
+      excerpt: formData.get('excerpt'),
+      badgeType: formData.get('badgeType'),
+      badgetype: formData.get('badgeType'),
+      badgetypeid: formData.get('badgetypeid'),
+      date: formData.get('date'),
+      journalCode: formData.get('journalCode'),
+      journalcode: formData.get('journalCode'),
+      journalcodeid: formData.get('journalcodeid'),
+      authors: formData.get('authors') ? JSON.parse(formData.get('authors')) : [],
+      status: formData.get('status') || 'Draft',
+      image: formData.get('image'), // This will be the File object
+      recordinfo: formData.get('recordinfo') ? JSON.parse(formData.get('recordinfo')) : null
+    }
     
     // Validate required fields
     const requiredFields = ['title', 'journalid', 'articletypeid', 'keywords', 'excerpt', 'badgetypeid', 'date', 'journalcodeid', 'authors']
@@ -250,10 +215,31 @@ export async function POST(request) {
     const randomStr = Math.random().toString(36).substring(2, 15)
     const articleId = `id_${timestamp}_${randomStr}`
     
+    // Handle image - can be either File object or URL string
+    let imageData = null
+    if (articleData.image && articleData.image instanceof File) {
+      // Convert file to base64 for storage
+      const bytes = await articleData.image.arrayBuffer()
+      const buffer = Buffer.from(bytes)
+      const base64 = buffer.toString('base64')
+      const mimeType = articleData.image.type
+      
+      imageData = {
+        name: articleData.image.name,
+        type: mimeType,
+        size: articleData.image.size,
+        base64: `data:${mimeType};base64,${base64}`
+      }
+    } else if (articleData.image && typeof articleData.image === 'string') {
+      // If it's a URL string, store it directly
+      imageData = articleData.image
+    }
+    
     // Create new article
     const newArticle = {
       _id: articleId,
       ...articleData,
+      image: imageData || articleData.image, // Use processed image data or original
       status: 1, // Mark as published
       recordinfo: {
         entryBy: articleData.recordinfo?.entryBy || "1760636856216",
