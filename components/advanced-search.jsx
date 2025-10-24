@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   Search,
   X,
@@ -14,23 +15,17 @@ import {
 import TagPicker from "./ui/tag-picker"
 
 export default function AdvancedSearch() {
+  const router = useRouter()
   const [filters, setFilters] = useState({
     title: "",
     journal: "",
     articleType: "",
     keywords: [],
-    badgeType: "",
+    badgeType: "Research",
     dateRange: [],
     journalCode: ""
   })
-  const [results, setResults] = useState([])
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    totalItems: 0
-  })
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(null)
 
   const filterOptions = {
     journals: [
@@ -69,10 +64,6 @@ export default function AdvancedSearch() {
     ],
     badgeTypes: [
       { id: "Research", name: "Research" },
-      { id: "Open Access", name: "Open Access" },
-      { id: "Comment", name: "Comment" },
-      { id: "News", name: "News" },
-      { id: "Review", name: "Review" }
     ]
   }
 
@@ -100,13 +91,10 @@ export default function AdvancedSearch() {
       journal: "",
       articleType: "",
       keywords: [],
-      badgeType: "",
+      badgeType: "Research",
       dateRange: [],
       journalCode: ""
     })
-    setResults([])
-    setPagination({ currentPage: 1, totalPages: 1, totalItems: 0 })
-    setError(null)
   }
 
   const hasActiveFilters = () => {
@@ -121,55 +109,26 @@ export default function AdvancedSearch() {
     )
   }
 
-  const fetchFilteredResults = async (page = 1, limit = 10) => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const params = new URLSearchParams()
-      if (filters.title) params.append("title", filters.title)
-      if (filters.journal) params.append("journal", filters.journal)
-      if (filters.articleType) params.append("articleType", filters.articleType)
-      if (filters.keywords.length > 0)
-        params.append("keywords", filters.keywords.join(","))
-      if (filters.badgeType) params.append("badgeType", filters.badgeType)
-      if (filters.journalCode) params.append("journalCode", filters.journalCode)
-      if (filters.dateRange[0] && filters.dateRange[1]) {
-        params.append("date", JSON.stringify(filters.dateRange))
-      }
-
-      params.append("page", page)
-      params.append("limit", limit)
-
-      const res = await fetch(
-        `https://brockersbackend.finnovationz.com/api/article/public/filters?${params.toString()}`
-      )
-      const data = await res.json()
-
-      if (data.success) {
-        // ✅ match backend response structure
-        setResults(data.data.articles || [])
-        setPagination(data.data.pagination || {
-          currentPage: page,
-          totalPages: 1,
-          totalItems: 0
-        })
-      } else {
-        setResults([])
-        setError(data.message || "Error fetching results")
-      }
-    } catch (err) {
-      console.error("❌ Error fetching results:", err)
-      setResults([])
-      setError(err.message)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleSubmit = (e) => {
     e.preventDefault()
-    fetchFilteredResults()
+    setIsLoading(true)
+
+    // Build search parameters
+    const params = new URLSearchParams()
+    
+    if (filters.title) params.append("title", filters.title)
+    if (filters.journal) params.append("journal", filters.journal)
+    if (filters.articleType) params.append("articleType", filters.articleType)
+    if (filters.keywords.length > 0) params.append("keywords", filters.keywords.join(","))
+    if (filters.badgeType) params.append("badgeType", filters.badgeType)
+    if (filters.journalCode) params.append("journalCode", filters.journalCode)
+    if (filters.dateRange[0] && filters.dateRange[1]) {
+      params.append("dateRange", filters.dateRange.join(","))
+    }
+
+    // Redirect to search page with parameters
+    const searchUrl = `/search?${params.toString()}`
+    router.push(searchUrl)
   }
 
   return (
@@ -252,7 +211,6 @@ export default function AdvancedSearch() {
                 onChange={(e) => handleInputChange("badgeType", e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
               >
-                <option value="">All Badge Types</option>
                 {filterOptions.badgeTypes.map((type) => (
                   <option key={type.id} value={type.id}>
                     {type.name}
@@ -346,30 +304,6 @@ export default function AdvancedSearch() {
           </button>
         </div>
 
-        {/* Results */}
-        {error && <p className="text-red-500 mt-4">{error}</p>}
-        {results.length > 0 && (
-          <div className="mt-6">
-            <p className="text-sm text-gray-600 mb-2">
-              Showing {results.length} of {pagination.totalItems} articles
-            </p>
-            <div className="grid md:grid-cols-2 gap-6">
-              {results.map((article) => (
-                <div
-                  key={article._id}
-                  className="border p-4 rounded-lg shadow-sm hover:shadow-md transition"
-                >
-                  <h3 className="font-semibold text-lg text-gray-900">
-                    {article.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {article.journal} | {article.articleType}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </form>
     </div>
   )

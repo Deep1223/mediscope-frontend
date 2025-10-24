@@ -8,7 +8,9 @@ export default function LatestResearch() {
   const [selectedJournal, setSelectedJournal] = useState("all")
   const [selectedType, setSelectedType] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
   const [allArticles, setAllArticles] = useState([])
+  const [filteredArticles, setFilteredArticles] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -27,7 +29,7 @@ export default function LatestResearch() {
           excerpt: article.excerpt,
           image: article.image || "/placeholder.jpg",
           badge: article.keywords?.[0]?.toUpperCase() || "RESEARCH",
-          badgeType: article.badgetype || "research",
+          badgeType: article.badgeType || article.badgetype || "research",
           journal: article.journal,
           journalCode: article.journalcode,
           authors: Array.isArray(article.authors)
@@ -46,66 +48,67 @@ export default function LatestResearch() {
           entryTime: article.recordinfo?.entryTime || article.date
         }))
         setAllArticles(transformed)
+        setFilteredArticles(transformed) // Initialize filtered articles
       } else {
         setAllArticles([])
+        setFilteredArticles([])
       }
     } catch (err) {
       console.error(err)
       setError(err.message)
       setAllArticles([])
+      setFilteredArticles([])
     } finally {
       setLoading(false)
     }
   }
 
-  const fetchFilteredArticles = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const params = new URLSearchParams()
-      if (selectedJournal !== "all") params.append("journalCode", selectedJournal)
-      if (selectedType !== "all") params.append("articleType", selectedType)
-      if (searchTerm) params.append("title", searchTerm)
-      const response = await fetch(`https://brockersbackend.finnovationz.com/api/article/public/filters?${params.toString()}`)
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
-      const data = await response.json()
-      if (data.success && data.data?.filteredResults) {
-        const transformed = data.data.filteredResults.map(article => ({
-          id: article._id,
-          _id: article._id,
-          title: article.title,
-          excerpt: article.excerpt,
-          image: article.image || "/placeholder.jpg",
-          badge: article.keywords?.[0]?.toUpperCase() || "RESEARCH",
-          badgeType: article.badgetype || "research",
-          journal: article.journal,
-          journalCode: article.journalcode,
-          authors: Array.isArray(article.authors)
-            ? article.authors
-            : typeof article.authors === "string"
-            ? article.authors.split(",").map(a => a.trim())
-            : [],
-          date: new Date(article.date || article.recordinfo?.entryTime).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short"
-          }),
-          link: `/article/${article._id}`,
-          type: "research",
-          articletype: article.articletype || "Original Research",
-          status: article.status,
-          entryTime: article.recordinfo?.entryTime || article.date
-        }))
-        setAllArticles(transformed)
-      } else {
-        setAllArticles([])
-      }
-    } catch (err) {
-      console.error(err)
-      setError(err.message)
-      setAllArticles([])
-    } finally {
-      setLoading(false)
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 300) // 300ms delay
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  // Frontend filtering function
+  const filterArticles = () => {
+    let filtered = [...allArticles]
+
+    // Filter by search term (title and authors)
+    if (debouncedSearchTerm) {
+      const searchLower = debouncedSearchTerm.toLowerCase()
+      filtered = filtered.filter(article => {
+        const titleMatch = article.title && typeof article.title === 'string' 
+          ? article.title.toLowerCase().includes(searchLower) 
+          : false
+        const authorMatch = article.authors?.some(author => {
+          // Handle different author data types
+          if (typeof author === 'string' && author.trim()) {
+            return author.toLowerCase().includes(searchLower)
+          } else if (typeof author === 'object' && author && author.name && typeof author.name === 'string') {
+            return author.name.toLowerCase().includes(searchLower)
+          } else if (typeof author === 'object' && author && typeof author === 'string') {
+            return author.toLowerCase().includes(searchLower)
+          }
+          return false
+        })
+        return titleMatch || authorMatch
+      })
     }
+
+    // Filter by journal
+    if (selectedJournal !== "all") {
+      filtered = filtered.filter(article => article.journal === selectedJournal)
+    }
+
+    // Filter by article type
+    if (selectedType !== "all") {
+      filtered = filtered.filter(article => article.articletype === selectedType)
+    }
+
+    setFilteredArticles(filtered)
   }
 
   // Initial load: fetch all articles
@@ -113,14 +116,10 @@ export default function LatestResearch() {
     fetchAllArticles()
   }, [])
 
-  // When filters/search change, call filtered API only if something is not "all"
+  // When filters/search change, apply frontend filtering
   useEffect(() => {
-    if (selectedJournal === "all" && selectedType === "all" && searchTerm === "") {
-      fetchAllArticles()
-    } else {
-      fetchFilteredArticles()
-    }
-  }, [selectedJournal, selectedType, searchTerm])
+    filterArticles()
+  }, [selectedJournal, selectedType, debouncedSearchTerm, allArticles])
 
   const handleReset = () => {
     setSelectedJournal("all")
@@ -180,12 +179,13 @@ export default function LatestResearch() {
                 <h4 className="filter-group-title font-semibold mb-2">Journal</h4>
                 {[
                   { value: "all", label: "All Journals" },
-                  { value: "ayurveda", label: "AyushVeda Ayurveda" },
-                  { value: "yoga", label: "AyushVeda Yoga" },
-                  { value: "naturopathy", label: "AyushVeda Naturopathy" },
-                  { value: "homeopathy", label: "AyushVeda Homeopathy" },
-                  { value: "unani", label: "AyushVeda Unani" },
-                  { value: "siddha", label: "AyushVeda Siddha" },
+                  { value: "AyushVeda Ayurveda", label: "AyushVeda Ayurveda" },
+                  { value: "AyushVeda Yoga", label: "AyushVeda Yoga" },
+                  { value: "AyushVeda Naturopathy", label: "AyushVeda Naturopathy" },
+                  { value: "AyushVeda Homeopathy", label: "AyushVeda Homeopathy" },
+                  { value: "AyushVeda Unani", label: "AyushVeda Unani" },
+                  { value: "AyushVeda Siddha", label: "AyushVeda Siddha" },
+                  { value: "AyushVeda Global Health", label: "AyushVeda Global Health" },
                 ].map((option) => (
                   <div key={option.value} className="filter-option">
                     <input
@@ -270,9 +270,9 @@ export default function LatestResearch() {
                   Try Again
                 </button>
               </div>
-            ) : allArticles.length > 0 ? (
+            ) : filteredArticles?.filter(article => article.status === '1' || article.status === 1)?.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-16">
-                {allArticles.map((article) => (
+                {filteredArticles?.filter(article => article.status === '1' || article.status === 1)?.map((article) => (
                   <ArticleCard key={article.id} article={article} />
                 ))}
               </div>

@@ -32,6 +32,21 @@ export default function ArticleCard({ article }) {
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden group">
+      {/* Article Image */}
+      {article.image && (
+        <div className="relative h-48 w-full overflow-hidden">
+          <img
+            src={article.image}
+            alt={article.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              e.target.src = "/placeholder.jpg"
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+        </div>
+      )}
+      
       {/* Article Header */}
       <div className="p-6 border-b border-gray-100">
         <div className="flex items-start justify-between mb-4">
@@ -53,7 +68,7 @@ export default function ArticleCard({ article }) {
           <div className="flex flex-col items-end gap-2">
             <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-medium rounded-full">
               <Award size={12} />
-              {article.badgetype}
+              {article.badgetype || article.badgeType || "Research"}
             </span>
             <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
               <Code size={12} />

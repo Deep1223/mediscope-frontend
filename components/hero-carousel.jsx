@@ -17,7 +17,7 @@ export default function HeroCarousel() {
         const data = await response.json()
         if (data.success && data.data?.articles) {
           // ✅ Transform the data to match carousel display needs
-          const items = data.data.articles.map((article) => ({
+          const items = data.data.articles?.filter(article => article.status === 1 || article.status === "1")?.map((article) => ({
             id: article._id,
             title: article.title?.trim(),
             subtitle: article.excerpt?.replace(/<\/?[^>]+(>|$)/g, "").slice(0, 150) + "...", // strip HTML

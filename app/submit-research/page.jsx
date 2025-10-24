@@ -31,7 +31,7 @@ export default function SubmitResearchPage() {
     date: "",
     journalcodeid: "",
     journalcode: "",
-    status: 1,
+    status: 0,
 
     // Step 2: Authors
     authors: [{ name: "", email: "", affiliation: "" }],
@@ -220,10 +220,6 @@ export default function SubmitResearchPage() {
 
   const badgeTypes = [
     { id: 1, name: "Research" },
-    { id: 2, name: "Open Access" },
-    { id: 3, name: "Comment" },
-    { id: 4, name: "News" },
-    { id: 5, name: "Review" },
   ]
 
   const journalCodes = [
@@ -480,7 +476,7 @@ export default function SubmitResearchPage() {
       const submissionData = {
         _id: generateId(),
         ...formData,
-        status: 1, // Mark as submitted and approved for top listing
+        status: 0, // Mark as submitted and approved for top listing
         recordinfo: {
           entryBy: "1760636856216", // You can make this dynamic
           entryTime: new Date().toISOString(),

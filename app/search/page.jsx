@@ -6,13 +6,13 @@ import Header from "@/components/header"
 import Footer from "@/components/footer"
 import ArticleCard from "@/components/article-card"
 import { ChevronLeft, ChevronRight, X, Search as SearchIcon } from "lucide-react"
-import { getPublishedArticles } from "../../lib/api-utils"
 
 export default function SearchPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const query = searchParams.get("q") || ""
-  const [results, setResults] = useState([])
+  const [allArticles, setAllArticles] = useState([])
+  const [filteredResults, setFilteredResults] = useState([])
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   const [activeFilters, setActiveFilters] = useState([])
@@ -56,30 +56,165 @@ export default function SearchPage() {
     return params
   }
 
-  const fetchArticles = async (params) => {
+  // Fetch all articles once
+  const fetchAllArticles = async () => {
     setLoading(true)
     try {
-      const response = await getPublishedArticles(params)
-      if (response.success) {
-        setResults(response.data.articles)
-        setPagination(response.data.pagination)
+      const response = await fetch('https://brockersbackend.finnovationz.com/api/article/public/articles?limit=100&sortBy=date&sortOrder=desc')
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+      const data = await response.json()
+      if (data.success && data.data?.articles) {
+        const transformed = data.data.articles.map(article => ({
+          id: article._id,
+          _id: article._id,
+          title: article.title,
+          excerpt: article.excerpt,
+          image: article.image || "/placeholder.jpg",
+          badge: article.keywords?.[0]?.toUpperCase() || "RESEARCH",
+          badgeType: article.badgeType || article.badgetype || "research",
+          journal: article.journal,
+          journalCode: article.journalCode || article.journalcode,
+          keywords: Array.isArray(article.keywords) 
+            ? article.keywords 
+            : typeof article.keywords === "string" 
+            ? article.keywords.split(",").map(k => k.trim()) 
+            : [],
+          authors: Array.isArray(article.authors)
+            ? article.authors
+            : typeof article.authors === "string"
+            ? article.authors.split(",").map(a => a.trim())
+            : [],
+          date: new Date(article.date || article.recordinfo?.entryTime).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short"
+          }),
+          link: `/article/${article._id}`,
+          type: "research",
+          articletype: article.articletype || "Original Research",
+          status: article.status,
+          entryTime: article.recordinfo?.entryTime || article.date,
+          date: article.date
+        }))
+        setAllArticles(transformed)
       } else {
-        setResults([])
-        setPagination({})
+        setAllArticles([])
       }
     } catch (error) {
       console.error('Error fetching articles:', error)
-      setResults([])
-      setPagination({})
+      setAllArticles([])
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => {
+  // Frontend filtering function
+  const filterArticles = () => {
+    let filtered = [...allArticles]
+
+    // Filter by search query (title and authors)
+    if (query) {
+      const searchLower = query.toLowerCase()
+      filtered = filtered.filter(article => {
+        const titleMatch = article.title && typeof article.title === 'string' 
+          ? article.title.toLowerCase().includes(searchLower) 
+          : false
+        const authorMatch = article.authors?.some(author => {
+          if (typeof author === 'string' && author.trim()) {
+            return author.toLowerCase().includes(searchLower)
+          } else if (typeof author === 'object' && author && author.name && typeof author.name === 'string') {
+            return author.name.toLowerCase().includes(searchLower)
+          }
+          return false
+        })
+        return titleMatch || authorMatch
+      })
+    }
+
+    // Apply additional filters from URL params
     const params = parseSearchParams()
-    fetchArticles(params)
-  }, [searchParams])
+    
+    if (params.title) {
+      const titleLower = params.title.toLowerCase()
+      filtered = filtered.filter(article => 
+        article.title && article.title.toLowerCase().includes(titleLower)
+      )
+    }
+
+    if (params.journal) {
+      filtered = filtered.filter(article => article.journal === params.journal)
+    }
+
+    if (params.articleType) {
+      filtered = filtered.filter(article => article.articletype === params.articleType)
+    }
+
+    if (params.keywords && params.keywords.length > 0) {
+      filtered = filtered.filter(article => {
+        if (!article.keywords || article.keywords.length === 0) return false
+        return params.keywords.some(keyword => {
+          const keywordLower = keyword.toLowerCase().trim()
+          return article.keywords.some(articleKeyword => {
+            if (typeof articleKeyword === 'string') {
+              return articleKeyword.toLowerCase().includes(keywordLower)
+            }
+            return false
+          })
+        })
+      })
+    }
+
+    if (params.badgeType) {
+      filtered = filtered.filter(article => 
+        article.badgeType?.toLowerCase() === params.badgeType.toLowerCase()
+      )
+    }
+
+    if (params.journalCode) {
+      filtered = filtered.filter(article => 
+        article.journalCode?.toLowerCase() === params.journalCode.toLowerCase()
+      )
+    }
+
+    if (params.dateRange && params.dateRange.length === 2) {
+      const [startDate, endDate] = params.dateRange
+      if (startDate && endDate) {
+        const start = new Date(startDate)
+        const end = new Date(endDate)
+        filtered = filtered.filter(article => {
+          const articleDate = new Date(article.entryTime || article.date)
+          return articleDate >= start && articleDate <= end
+        })
+      }
+    }
+
+    // Filter by status (only published articles)
+    filtered = filtered.filter(article => article.status === '1' || article.status === 1)
+
+    setFilteredResults(filtered)
+    
+    // Update pagination
+    const totalPages = Math.ceil(filtered.length / resultsPerPage)
+    setPagination({
+      currentPage: 1,
+      totalPages: totalPages,
+      totalArticles: filtered.length,
+      hasNextPage: totalPages > 1,
+      hasPrevPage: false,
+      limit: resultsPerPage
+    })
+  }
+
+  // Initial load: fetch all articles
+  useEffect(() => {
+    fetchAllArticles()
+  }, [])
+
+  // When articles are loaded or search params change, apply filtering
+  useEffect(() => {
+    if (allArticles.length > 0) {
+      filterArticles()
+    }
+  }, [allArticles, searchParams])
 
   const removeFilter = (filterKey) => {
     const currentParams = new URLSearchParams(searchParams.toString())
@@ -89,9 +224,14 @@ export default function SearchPage() {
   }
 
   const handlePageChange = (newPage) => {
-    const currentParams = new URLSearchParams(searchParams.toString())
-    currentParams.set('page', newPage)
-    router.push(`/search?${currentParams.toString()}`)
+    setCurrentPage(newPage)
+  }
+
+  // Get paginated results
+  const getPaginatedResults = () => {
+    const startIndex = (currentPage - 1) * resultsPerPage
+    const endIndex = startIndex + resultsPerPage
+    return filteredResults.slice(startIndex, endIndex)
   }
 
   return (
@@ -106,7 +246,7 @@ export default function SearchPage() {
               Search Results
             </h1>
             <p className="text-gray-600">
-              {pagination.totalArticles || results.length} results found
+              {filteredResults.length} results found
               {query && (
                 <>
                   {" "}for{" "}
@@ -147,10 +287,10 @@ export default function SearchPage() {
                 <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
                 <p className="mt-4 text-gray-600">Loading results...</p>
               </div>
-            ) : results.length > 0 ? (
+            ) : filteredResults.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {results.map((article) => (
+                  {getPaginatedResults().map((article) => (
                     <ArticleCard key={article._id} article={article} />
                   ))}
                 </div>
@@ -159,8 +299,8 @@ export default function SearchPage() {
                 {pagination.totalPages > 1 && (
                   <div className="flex justify-center items-center gap-2 mt-8">
                     <button
-                      onClick={() => handlePageChange(Math.max(1, pagination.currentPage - 1))}
-                      disabled={!pagination.hasPrevPage}
+                      onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                      disabled={currentPage <= 1}
                       className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       aria-label="Previous page"
                     >
@@ -172,12 +312,12 @@ export default function SearchPage() {
                         let pageNum
                         if (pagination.totalPages <= 5) {
                           pageNum = i + 1
-                        } else if (pagination.currentPage <= 3) {
+                        } else if (currentPage <= 3) {
                           pageNum = i + 1
-                        } else if (pagination.currentPage >= pagination.totalPages - 2) {
+                        } else if (currentPage >= pagination.totalPages - 2) {
                           pageNum = pagination.totalPages - 4 + i
                         } else {
-                          pageNum = pagination.currentPage - 2 + i
+                          pageNum = currentPage - 2 + i
                         }
 
                         return (
@@ -185,7 +325,7 @@ export default function SearchPage() {
                             key={pageNum}
                             onClick={() => handlePageChange(pageNum)}
                             className={`px-3 py-2 rounded-lg transition-colors ${
-                              pagination.currentPage === pageNum
+                              currentPage === pageNum
                                 ? "bg-emerald-500 text-white"
                                 : "border border-gray-300 hover:bg-gray-100"
                             }`}
@@ -197,8 +337,8 @@ export default function SearchPage() {
                     </div>
 
                     <button
-                      onClick={() => handlePageChange(Math.min(pagination.totalPages, pagination.currentPage + 1))}
-                      disabled={!pagination.hasNextPage}
+                      onClick={() => handlePageChange(Math.min(pagination.totalPages, currentPage + 1))}
+                      disabled={currentPage >= pagination.totalPages}
                       className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       aria-label="Next page"
                     >
