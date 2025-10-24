@@ -92,64 +92,116 @@ export default function ArticlePage({ params }) {
         }
     }
 
-    const handleDownloadPDF = async () => {
-        if (isGeneratingPDF || !articleRef.current) return
-
-        setIsGeneratingPDF(true)
-
-        try {
-            // Create a canvas from the article content
-            const canvas = await html2canvas(articleRef.current, {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: '#ffffff',
-                logging: false,
-                height: articleRef.current.scrollHeight,
-                width: articleRef.current.scrollWidth
-            })
-
-            const imgData = canvas.toDataURL('image/png')
-            
-            // Create PDF
-            const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: 'a4'
-            })
-
-            const pageWidth = pdf.internal.pageSize.getWidth()
-            const pageHeight = pdf.internal.pageSize.getHeight()
-            
-            // Calculate image dimensions to fit page
-            const imgWidth = pageWidth - 20 // 10mm margin on each side
-            const imgHeight = (canvas.height * imgWidth) / canvas.width
-            
-            let heightLeft = imgHeight
-            let position = 10 // 10mm top margin
-
-            // Add image to PDF, handle multiple pages if needed
-            pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight)
-            heightLeft -= (pageHeight - 20) // Subtract page height minus margins
-
-            while (heightLeft >= 0) {
-                position = heightLeft - imgHeight + 10
-                pdf.addPage()
-                pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight)
-                heightLeft -= (pageHeight - 20)
+    const convertImageToDataURL = (url) => {
+        return new Promise((resolve, reject) => {
+            if (!url || url.startsWith('data:')) {
+                return resolve(url); // Already a data URL or no URL
             }
+    
+            const img = new Image();
+            img.crossOrigin = 'Anonymous'; // Crucial: Request the image using CORS
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                
+                // Convert the now "clean" canvas image data to a data URL
+                const dataURL = canvas.toDataURL('image/png'); 
+                resolve(dataURL);
+            };
+            img.onerror = (error) => {
+                console.error("Failed to load or convert image:", error);
+                reject(new Error("Image conversion failed."));
+            };
+            img.src = url;
+        });
+    };
 
-            // Download the PDF
-            const fileName = `${article.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`
-            pdf.save(fileName)
+// ... (rest of the component)
 
-        } catch (error) {
-            console.error('PDF generation failed:', error)
-            alert('Failed to generate PDF. Please try again.')
-        } finally {
-            setIsGeneratingPDF(false)
+// inside the ArticlePage component:
+
+const handleDownloadPDF = async () => {
+    if (isGeneratingPDF || !articleRef.current) return;
+    if (!article || !article.title) return;
+
+    setIsGeneratingPDF(true);
+
+    // --- START OF FIX: HIDE IMAGE SECTION ---
+    const elementsToHide = articleRef.current.querySelectorAll('.pdf-exclude-image');
+    // Store original styles to restore them later
+    const originalStyles = []; 
+
+    elementsToHide.forEach(el => {
+        originalStyles.push({ el, display: el.style.display });
+        el.style.display = 'none'; // Temporarily hide the image block
+    });
+    // --- END OF FIX: HIDE IMAGE SECTION ---
+
+    try {
+        // 1. Capture the entire article content (now without the image block)
+        const canvas = await html2canvas(articleRef.current, {
+            scale: 2,
+            // We can keep useCORS: true just in case, but it's not the primary fix here
+            useCORS: true, 
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            height: articleRef.current.scrollHeight,
+            width: articleRef.current.scrollWidth
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        
+        // 2. Initialize jsPDF (Pagination logic from the previous fix)
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 10;
+        const usableWidth = pageWidth - (2 * margin);
+        const usableHeight = pageHeight - (2 * margin);
+        
+        const imgWidth = usableWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        // Add content, handling pagination
+        pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+        heightLeft -= usableHeight;
+
+        while (heightLeft > 0) {
+            position = -(imgHeight - heightLeft);
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', margin, position + margin, imgWidth, imgHeight);
+            heightLeft -= usableHeight;
         }
+
+        // 3. Download the PDF
+        const fileName = `${article.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+        pdf.save(fileName);
+
+    } catch (error) {
+        console.error('PDF generation failed:', error);
+        alert('Failed to generate PDF. Please try again.');
+    } finally {
+        // --- START OF CLEANUP: RESTORE IMAGE SECTION ---
+        // 4. IMPORTANT: Restore the original display styles
+        originalStyles.forEach(({ el, display }) => {
+            el.style.display = display;
+        });
+        // --- END OF CLEANUP: RESTORE IMAGE SECTION ---
+        setIsGeneratingPDF(false);
     }
+}
 
     // Format date helper
     const formatDate = (dateString) => {
@@ -301,8 +353,8 @@ export default function ArticlePage({ params }) {
                             <div className="p-8">
                                 {/* Article Image */}
                                 {article.image && (
-                                <div className="mb-8">
-                                    <div className="relative overflow-hidden rounded-2xl shadow-lg">
+                                <div className="mb-8 pdf-exclude-image">
+                                    <div className="relative overflow-hidden rounded-2xl shadow-lg ">
                                         <img
                                             src={article.image}
                                             alt={article.title}
