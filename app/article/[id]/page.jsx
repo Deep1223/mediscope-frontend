@@ -473,7 +473,9 @@ const handleDownloadPDF = async () => {
                             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
                                 <h3 className="font-semibold text-gray-900 mb-4">Related Articles</h3>
                                 <div className="space-y-4">
-                                    {relatedArticles.map((related) => (
+                                        {
+                                            relatedArticles?.filter(data => (data.status === '1' || data.status === 1))?.length > 0 ?
+                                                relatedArticles?.filter(data => (data.status === '1' || data.status === 1)).map((related) => (
                                         <Link
                                             key={related.id}
                                             href={`/article/${related.id}`}
@@ -498,7 +500,14 @@ const handleDownloadPDF = async () => {
                                                 </div>
                                             </div>
                                         </Link>
-                                    ))}
+                                                ))
+                                                :
+                                                <div className="p-4 rounded-xl border border-gray-100 hover:border-emerald-200 hover:shadow-md transition-all duration-300">
+                                                    <div className="h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                                                        <span className="text-gray-500 font-bold text-xs">No related articles found</span>
+                                                    </div>
+                                                </div>
+                                        }
                                 </div>
                             </div>
                             )}
